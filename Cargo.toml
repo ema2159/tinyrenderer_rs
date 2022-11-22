@@ -1,9 +1,9 @@
 [package]
-name = "tinirenderer_rs"
+name = "tinyrenderer_rs"
 version = "0.0.0"
 description = "Rust implementation of Tiny Renderer"
 authors = ["Emmanuel Bustos <ema2159@gmail.com>"]
 
 [dependencies]
 image = "0.24.5"
-piston_window = "*"
+piston_window = "0.127.0"
