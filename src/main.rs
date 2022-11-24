@@ -15,10 +15,10 @@ fn main() {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     draw_line(
-        &mut img,
         Point { x: 0, y: 0 },
         Point { x: 700, y: 719 },
         Rgba([255, 255, 255, 255]),
+        &mut img,
     );
 
     image::imageops::flip_vertical_in_place(&mut img);

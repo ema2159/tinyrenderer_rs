@@ -6,7 +6,7 @@ pub struct Point {
 }
 
 // Implementation of the Bresenham's line algorithm
-pub fn draw_line(img: &mut RgbaImage, start: Point, end: Point, color: Rgba<u8>) {
+pub fn draw_line(start: Point, end: Point, color: Rgba<u8>, img: &mut RgbaImage) {
     let Point {
         x: mut x0,
         y: mut y0,
