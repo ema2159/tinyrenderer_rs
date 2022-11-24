@@ -1,4 +1,5 @@
 use image::{Rgba, RgbaImage};
+use obj::Obj;
 
 pub struct Point {
     pub x: i32,

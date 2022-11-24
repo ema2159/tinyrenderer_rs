@@ -1,9 +1,11 @@
 extern crate image;
+extern crate obj;
 extern crate piston_window;
 
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
+use obj::{load_obj, Obj};
 use piston_window::EventLoop;
 use tinyrenderer::draw_line;
 use tinyrenderer::Point;
