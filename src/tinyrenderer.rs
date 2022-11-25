@@ -46,7 +46,7 @@ fn line(start: &Point, end: &Point) -> Vec<Point> {
     let mut y = y0;
     if steep {
         for x in x0..=x1 {
-            result.push(Point {x: y, y: x});
+            result.push(Point { x: y, y: x });
             if d > 0 {
                 y = y + yi;
                 d = d - 2 * dx;
@@ -55,7 +55,7 @@ fn line(start: &Point, end: &Point) -> Vec<Point> {
         }
     } else {
         for x in x0..=x1 {
-            result.push(Point {x, y});
+            result.push(Point { x, y });
             if d > 0 {
                 y = y + yi;
                 d = d - 2 * dx;
@@ -70,7 +70,7 @@ fn line(start: &Point, end: &Point) -> Vec<Point> {
 pub fn draw_line(start: &Point, end: &Point, color: Rgba<u8>, img: &mut RgbaImage) {
     let line = line(&start, &end);
     let mut line_iter = line.iter();
-    while let Some(Point {x, y}) = line_iter.next() {
+    while let Some(Point { x, y }) = line_iter.next() {
         img.put_pixel(*x as u32, *y as u32, color);
     }
 }
