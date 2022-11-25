@@ -146,7 +146,7 @@ fn draw_flat_triangle(
     }
 }
 
-pub fn draw_face(v0: Point, v1: Point, v2: Point, color: Rgba<u8>, img: &mut RgbaImage) {
+fn draw_face_line_sweeping(v0: Point, v1: Point, v2: Point, color: Rgba<u8>, img: &mut RgbaImage) {
     let mut points = [v0, v1, v2];
     points.sort_by_key(|k| k.y);
     let [v0, v1, v2] = points;
@@ -185,6 +185,6 @@ pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
             y: ((v3y + 1.) * height_half) as i32,
         };
         // Draw face
-        draw_face(point1, point2, point3, color, img);
+        draw_face_line_sweeping(point1, point2, point3, color, img);
     }
 }
