@@ -7,21 +7,24 @@ mod tinyrenderer;
 use image::{Rgba, RgbaImage};
 use obj::{load_obj, Obj};
 use piston_window::EventLoop;
-use tinyrenderer::draw_line;
-use tinyrenderer::Point;
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
+use tinyrenderer::draw_wireframe;
 
-const WIDTH: u32 = 1280;
-const HEIGHT: u32 = 720;
+const WIDTH: u32 = 1920;
+const HEIGHT: u32 = 1080;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
-    draw_line(
-        Point { x: 0, y: 0 },
-        Point { x: 700, y: 719 },
-        Rgba([255, 255, 255, 255]),
-        &mut img,
-    );
+    let obj_path =
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head.obj");
+    let input = BufReader::new(File::open(&obj_path)?);
+    let model: Obj = load_obj(input)?;
+
+    draw_wireframe(model, Rgba([255, 255, 255, 255]), &mut img);
 
     image::imageops::flip_vertical_in_place(&mut img);
 
@@ -46,4 +49,5 @@ fn main() {
             piston_window::image(&texture, c.transform, g);
         });
     }
+    Ok(())
 }

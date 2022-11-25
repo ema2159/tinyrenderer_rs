@@ -60,3 +60,69 @@ pub fn draw_line(start: Point, end: Point, color: Rgba<u8>, img: &mut RgbaImage)
         }
     };
 }
+
+pub fn draw_wireframe(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
+    let faces_num = model.indices.len();
+    let faces = &model.indices[..faces_num];
+    let (width_half, height_half) = (
+        ((img.width() - 1) / 2) as f32,
+        (((img.height() - 1) / 2) as f32),
+    );
+    for face in faces.chunks(3) {
+        let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
+        let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
+        let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
+        let (v1x, v1y) = (
+            ((v1x + 1.) * width_half) as i32,
+            ((v1y + 1.) * height_half) as i32,
+        );
+        let (v2x, v2y) = (
+            ((v2x + 1.) * width_half) as i32,
+            ((v2y + 1.) * height_half) as i32,
+        );
+        let (v3x, v3y) = (
+            ((v3x + 1.) * width_half) as i32,
+            ((v3y + 1.) * height_half) as i32,
+        );
+        println!("{}, {}", v1x, v1y);
+        println!("{}, {}", v2x, v2y);
+        println!("{}, {}", v3x, v3y);
+        // Draw triangle
+        draw_line(
+            Point {
+                x: v1x as i32,
+                y: v1y as i32,
+            },
+            Point {
+                x: v2x as i32,
+                y: v2y as i32,
+            },
+            color,
+            img,
+        );
+        draw_line(
+            Point {
+                x: v2x as i32,
+                y: v2y as i32,
+            },
+            Point {
+                x: v3x as i32,
+                y: v3y as i32,
+            },
+            color,
+            img,
+        );
+        draw_line(
+            Point {
+                x: v3x as i32,
+                y: v3y as i32,
+            },
+            Point {
+                x: v1x as i32,
+                y: v1y as i32,
+            },
+            color,
+            img,
+        );
+    }
+}
