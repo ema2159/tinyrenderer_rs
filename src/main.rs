@@ -11,7 +11,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use tinyrenderer::draw_wireframe;
+use tinyrenderer::draw_faces;
 
 const WIDTH: u32 = 1920;
 const HEIGHT: u32 = 1080;
@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let input = BufReader::new(File::open(&obj_path)?);
     let model: Obj = load_obj(input)?;
 
-    draw_wireframe(model, Rgba([255, 255, 255, 255]), &mut img);
+    draw_faces(model, Rgba([255, 255, 255, 255]), &mut img);
 
     image::imageops::flip_vertical_in_place(&mut img);
 
