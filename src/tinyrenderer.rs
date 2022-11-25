@@ -7,6 +7,22 @@ pub struct Point<T> {
     pub x: T,
     pub y: T,
 }
+
+pub struct Vec2<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T> Vec2<T>
+where
+    T: std::ops::Sub<Output = T> + Copy,
+{
+    fn from_points(point1: &Point<T>, point2: &Point<T>) -> Vec2<T> {
+        Vec2::<T> {
+            x: point2.x - point1.x,
+            y: point2.y - point1.y,
+        }
+    }
 }
 
 /// Implementation of the Bresenham's line algorithm
