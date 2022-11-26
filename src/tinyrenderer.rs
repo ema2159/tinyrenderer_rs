@@ -1,29 +1,7 @@
 #![allow(dead_code)]
 use image::{Rgba, RgbaImage};
 use obj::Obj;
-
-#[derive(Debug)]
-pub struct Point<T> {
-    pub x: T,
-    pub y: T,
-}
-
-pub struct Vec2<T> {
-    pub x: T,
-    pub y: T,
-}
-
-impl<T> Vec2<T>
-where
-    T: std::ops::Sub<Output = T> + Copy,
-{
-    fn from_points(point1: &Point<T>, point2: &Point<T>) -> Vec2<T> {
-        Vec2::<T> {
-            x: point2.x - point1.x,
-            y: point2.y - point1.y,
-        }
-    }
-}
+use tinyrenderer::structs::{Point, Vec2};
 
 /// Implementation of the Bresenham's line algorithm
 /// Returns a vector of points with each point representing the coordinates of the pixels to be
@@ -211,3 +189,5 @@ pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
         draw_face_line_sweeping(point1, point2, point3, color, img);
     }
 }
+
+mod structs;
