@@ -203,7 +203,6 @@ fn draw_face_barycentric(
     }
 }
 
-
 fn get_face_screen_coords(
     model: &Obj,
     face: &[u16],
@@ -250,21 +249,46 @@ fn get_face_world_coords(model: &Obj, face: &[u16]) -> [Point3<f32>; 3] {
     [point1, point2, point3]
 }
 
+fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vec3<f32>) -> f32 {
+    let vec0 = Vec3::from_points(&world_coords[0], &world_coords[1]);
+    let vec1 = Vec3::from_points(&world_coords[0], &world_coords[2]);
+    let norm = Vec3::cross(vec1, vec0);
+    let norm_normalized = norm.normalize();
+    Vec3::dot(norm_normalized, light_dir)
+}
+
 /// Draw triangle faces of given 3D object
 pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
-    let (width_half, height_half) = (
+    let (screen_width_half, screen_height_half) = (
         ((img.width() - 1) / 2) as f32,
         ((img.height() - 1) / 2) as f32,
     );
 
     for face in faces.chunks(3) {
-        let screen_coords = get_face_screen_coords(&model, face, width_half, height_half);
+        let screen_coords =
+            get_face_screen_coords(&model, face, screen_width_half, screen_height_half);
+        let world_coords = get_face_world_coords(&model, face);
+        let light_dir = Vec3 { x: 0., y: 0., z: -1. };
+        let intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
         let mut rng = rand::thread_rng();
-        let color = Rgba([rng.gen(), rng.gen(), rng.gen(), 255]);
-        draw_face_barycentric(&screen_coords[0], &screen_coords[1], &screen_coords[2], color, img);
+        if intensity > 0. {
+            let color = Rgba([
+                (255. * intensity) as u8,
+                (255. * intensity) as u8,
+                (255. * intensity) as u8,
+                255,
+            ]);
+            draw_face_barycentric(
+                &screen_coords[0],
+                &screen_coords[1],
+                &screen_coords[2],
+                color,
+                img,
+            );
+        }
     }
 }
 
