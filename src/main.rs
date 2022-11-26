@@ -35,7 +35,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             .build()
             .unwrap_or_else(|_e| panic!("Could not create window!"));
 
+    // Configure window properties
     window.set_lazy(true);
+    window.set_max_fps(60);
 
     let texture = piston_window::Texture::from_image(
         &mut window.create_texture_context(),
