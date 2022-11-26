@@ -6,18 +6,15 @@ pub struct Point<T> {
     pub y: T,
 }
 
-pub struct Vec2<T> {
-    pub x: T,
-    pub y: T,
-}
-
-impl<T> ops::Add<Point<T>> for Point<T>
+impl<T, U> ops::Add<&U> for Point<T>
 where
     T: ops::Add<Output = T> + Copy,
+    U: Algebr2D<T>,
 {
     type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: &U) -> Self::Output {
         let lhs = self;
+        let rhs = rhs.as_vec();
         Self {
             x: lhs.x + rhs.x,
             y: lhs.y + rhs.y,
@@ -25,13 +22,15 @@ where
     }
 }
 
-impl<T> ops::Mul<Vec2<T>> for Point<T>
+impl<T, U> ops::Mul<&U> for Point<T>
 where
     T: ops::Mul<Output = T> + Copy,
+    U: Algebr2D<T>,
 {
     type Output = Self;
-    fn mul(self, rhs: Vec2<T>) -> Self::Output {
+    fn mul(self, rhs: &U) -> Self::Output {
         let lhs = self;
+        let rhs = rhs.as_vec();
         Self {
             x: lhs.x * rhs.x,
             y: lhs.y * rhs.y,
@@ -39,9 +38,21 @@ where
     }
 }
 
-impl<T> Vec2<T>
+impl<T, U> ops::Sub<&U> for Point<T>
 where
     T: ops::Sub<Output = T> + Copy,
+    U: Algebr2D<T>,
+{
+    type Output = Self;
+    fn sub(self, rhs: &U) -> Self::Output {
+        let lhs = self;
+        let rhs = rhs.as_vec();
+        Self {
+            x: lhs.x - rhs.x,
+            y: lhs.y - rhs.y,
+        }
+    }
+}
 
 impl<T> Algebr2D<T> for Point<T>
 where
@@ -54,6 +65,16 @@ where
         }
     }
 }
+
+#[derive(Debug)]
+pub struct Vec2<T> {
+    pub x: T,
+    pub y: T,
+}
+
+impl<T> Vec2<T>
+where
+    T: ops::Sub<Output = T> + ops::Mul<Output = T> + Copy,
 {
     pub fn from_points(point1: &Point<T>, point2: &Point<T>) -> Vec2<T> {
         Vec2::<T> {
@@ -62,6 +83,12 @@ where
         }
     }
 
+    pub fn cross<U: Algebr2D<T>, V: Algebr2D<T>>(elem1: &U, elem2: &V) -> T {
+        let vec1 = elem1.as_vec();
+        let vec2 = elem2.as_vec();
+        (vec1.x * vec2.y) - (vec1.y * vec2.x)
+    }
+}
 
 impl<T> Algebr2D<T> for Vec2<T>
 where
