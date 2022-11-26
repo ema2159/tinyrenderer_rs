@@ -202,21 +202,26 @@ fn draw_face_barycentric(
 }
 
 
-fn get_face_screen_coords(model: &Obj, face: &[u16], width_half: f32, height_half: f32) -> [Point2<i32>; 3] {
+fn get_face_screen_coords(
+    model: &Obj,
+    face: &[u16],
+    half_screen_width: f32,
+    half_screen_height: f32,
+) -> [Point2<i32>; 3] {
     let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
     let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
     let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
     let point1 = Point2::<i32> {
-        x: ((v1x + 1.) * width_half) as i32,
-        y: ((v1y + 1.) * height_half) as i32,
+        x: ((v1x + 1.) * half_screen_width) as i32,
+        y: ((v1y + 1.) * half_screen_height) as i32,
     };
     let point2 = Point2::<i32> {
-        x: ((v2x + 1.) * width_half) as i32,
-        y: ((v2y + 1.) * height_half) as i32,
+        x: ((v2x + 1.) * half_screen_width) as i32,
+        y: ((v2y + 1.) * half_screen_height) as i32,
     };
     let point3 = Point2::<i32> {
-        x: ((v3x + 1.) * width_half) as i32,
-        y: ((v3y + 1.) * height_half) as i32,
+        x: ((v3x + 1.) * half_screen_width) as i32,
+        y: ((v3y + 1.) * half_screen_height) as i32,
     };
     [point1, point2, point3]
 }
