@@ -201,6 +201,25 @@ fn draw_face_barycentric(
     }
 }
 
+
+fn get_face_screen_coords(model: &Obj, face: &[u16], width_half: f32, height_half: f32) -> [Point<i32>; 3] {
+    let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
+    let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
+    let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
+    let point1 = Point::<i32> {
+        x: ((v1x + 1.) * width_half) as i32,
+        y: ((v1y + 1.) * height_half) as i32,
+    };
+    let point2 = Point::<i32> {
+        x: ((v2x + 1.) * width_half) as i32,
+        y: ((v2y + 1.) * height_half) as i32,
+    };
+    let point3 = Point::<i32> {
+        x: ((v3x + 1.) * width_half) as i32,
+        y: ((v3y + 1.) * height_half) as i32,
+    };
+    [point1, point2, point3]
+}
 /// Draw triangle faces of given 3D object
 pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
@@ -211,22 +230,7 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
     );
 
     for face in faces.chunks(3) {
-        let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
-        let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
-        let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
-        let point1 = Point::<i32> {
-            x: ((v1x + 1.) * width_half) as i32,
-            y: ((v1y + 1.) * height_half) as i32,
-        };
-        let point2 = Point::<i32> {
-            x: ((v2x + 1.) * width_half) as i32,
-            y: ((v2y + 1.) * height_half) as i32,
-        };
-        let point3 = Point::<i32> {
-            x: ((v3x + 1.) * width_half) as i32,
-            y: ((v3y + 1.) * height_half) as i32,
-        };
-        let screen_coords = [point1, point2, point3];
+        let screen_coords = get_face_screen_coords(&model, face, width_half, height_half);
         // Draw face
         let mut rng = rand::thread_rng();
         let color = Rgba([rng.gen(), rng.gen(), rng.gen(), 255]);
