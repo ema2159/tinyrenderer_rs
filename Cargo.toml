@@ -8,3 +8,4 @@ authors = ["Emmanuel Bustos <ema2159@gmail.com>"]
 image = "0.24.5"
 piston_window = "0.127.0"
 obj-rs = "0.6"
+rand = "*"

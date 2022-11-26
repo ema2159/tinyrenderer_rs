@@ -1,3 +1,4 @@
+extern crate rand;
 extern crate image;
 extern crate obj;
 extern crate piston_window;
@@ -24,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let input = BufReader::new(File::open(&obj_path)?);
     let model: Obj = load_obj(input)?;
 
-    draw_faces(model, Rgba([255, 255, 255, 255]), &mut img);
+    draw_faces(model, &mut img);
 
     image::imageops::flip_vertical_in_place(&mut img);
 

@@ -1,6 +1,8 @@
 #![allow(dead_code)]
+
 use image::{Rgba, RgbaImage};
 use obj::Obj;
+use rand::Rng;
 use tinyrenderer::structs::{Point, Vec2};
 
 /// Implementation of the Bresenham's line algorithm
@@ -200,7 +202,7 @@ fn draw_face_barycentric(
 }
 
 /// Draw triangle faces of given 3D object
-pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
+pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
     let (width_half, height_half) = (
@@ -225,6 +227,8 @@ pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
             y: ((v3y + 1.) * height_half) as i32,
         };
         // Draw face
+        let mut rng = rand::thread_rng();
+        let color = Rgba([rng.gen(), rng.gen(), rng.gen(), 255]);
         draw_face_barycentric(point1, point2, point3, color, img);
     }
 }
