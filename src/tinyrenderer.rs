@@ -3,22 +3,22 @@
 use image::{Rgba, RgbaImage};
 use obj::Obj;
 use rand::Rng;
-use tinyrenderer::structs::{Point, Vec2};
+use tinyrenderer::structs::{Point2, Vec2};
 
 /// Implementation of the Bresenham's line algorithm
 /// Returns a vector of points with each point representing the coordinates of the pixels to be
 /// drawn.
-fn line(start: &Point<i32>, end: &Point<i32>) -> Vec<Point<i32>> {
-    let Point::<i32> {
+fn line(start: &Point2<i32>, end: &Point2<i32>) -> Vec<Point2<i32>> {
+    let Point2::<i32> {
         x: mut x0,
         y: mut y0,
     } = start;
-    let Point::<i32> {
+    let Point2::<i32> {
         x: mut x1,
         y: mut y1,
     } = end;
 
-    let mut result = Vec::<Point<i32>>::new();
+    let mut result = Vec::<Point2<i32>>::new();
 
     // Consider case in which slope is more than 1
     let mut steep = false;
@@ -46,7 +46,7 @@ fn line(start: &Point<i32>, end: &Point<i32>) -> Vec<Point<i32>> {
     let mut y = y0;
     if steep {
         for x in x0..=x1 {
-            result.push(Point::<i32> { x: y, y: x });
+            result.push(Point2::<i32> { x: y, y: x });
             if d > 0 {
                 y = y + yi;
                 d = d - 2 * dx;
@@ -55,7 +55,7 @@ fn line(start: &Point<i32>, end: &Point<i32>) -> Vec<Point<i32>> {
         }
     } else {
         for x in x0..=x1 {
-            result.push(Point::<i32> { x, y });
+            result.push(Point2::<i32> { x, y });
             if d > 0 {
                 y = y + yi;
                 d = d - 2 * dx;
@@ -67,10 +67,10 @@ fn line(start: &Point<i32>, end: &Point<i32>) -> Vec<Point<i32>> {
 }
 
 /// Draw line given a set of points
-pub fn draw_line(start: &Point<i32>, end: &Point<i32>, color: Rgba<u8>, img: &mut RgbaImage) {
+pub fn draw_line(start: &Point2<i32>, end: &Point2<i32>, color: Rgba<u8>, img: &mut RgbaImage) {
     let line = line(&start, &end);
     let mut line_iter = line.iter();
-    while let Some(Point::<i32> { x, y }) = line_iter.next() {
+    while let Some(Point2::<i32> { x, y }) = line_iter.next() {
         img.put_pixel(*x as u32, *y as u32, color);
     }
 }
@@ -88,15 +88,15 @@ pub fn draw_wireframe(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
         let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
         let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
         let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
-        let point1 = Point::<i32> {
+        let point1 = Point2::<i32> {
             x: ((v1x + 1.) * width_half) as i32,
             y: ((v1y + 1.) * height_half) as i32,
         };
-        let point2 = Point::<i32> {
+        let point2 = Point2::<i32> {
             x: ((v2x + 1.) * width_half) as i32,
             y: ((v2y + 1.) * height_half) as i32,
         };
-        let point3 = Point::<i32> {
+        let point3 = Point2::<i32> {
             x: ((v3x + 1.) * width_half) as i32,
             y: ((v3y + 1.) * height_half) as i32,
         };
@@ -108,9 +108,9 @@ pub fn draw_wireframe(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
 }
 
 fn draw_flat_triangle(
-    edge: &Point<i32>,
-    base_l: &Point<i32>,
-    base_r: &Point<i32>,
+    edge: &Point2<i32>,
+    base_l: &Point2<i32>,
+    base_r: &Point2<i32>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
@@ -122,8 +122,8 @@ fn draw_flat_triangle(
         // =base_l.y = base_r.y
         for y in edge.y..=base_l.y {
             draw_line(
-                &Point::<i32> { x: x0 as i32, y },
-                &Point::<i32> { x: x1 as i32, y },
+                &Point2::<i32> { x: x0 as i32, y },
+                &Point2::<i32> { x: x1 as i32, y },
                 color,
                 img,
             );
@@ -133,8 +133,8 @@ fn draw_flat_triangle(
     } else {
         for y in (base_l.y..=edge.y).rev() {
             draw_line(
-                &Point::<i32> { x: x0 as i32, y },
-                &Point::<i32> { x: x1 as i32, y },
+                &Point2::<i32> { x: x0 as i32, y },
+                &Point2::<i32> { x: x1 as i32, y },
                 color,
                 img,
             );
@@ -146,9 +146,9 @@ fn draw_flat_triangle(
 
 /// Implementation of line sweeping algorithm for triangle filling
 fn draw_face_line_sweeping(
-    v0: &Point<i32>,
-    v1: &Point<i32>,
-    v2: &Point<i32>,
+    v0: &Point2<i32>,
+    v1: &Point2<i32>,
+    v2: &Point2<i32>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
@@ -160,16 +160,16 @@ fn draw_face_line_sweeping(
         v2.x + ((((v1.y - v2.y) as f32) / ((v0.y - v2.y) as f32)) * (v0.x - v2.x) as f32) as i32;
     // v3 corresponds to the point that is at the same height as the second-most vertex height-wise
     // that is at the edge of the triangle that is opposite of such a vertex
-    let v3 = Point::<i32> { x: v3_x, y: v3_y };
+    let v3 = Point2::<i32> { x: v3_x, y: v3_y };
     draw_flat_triangle(&v2, &v1, &v3, color, img);
     draw_flat_triangle(&v0, &v1, &v3, color, img);
 }
 
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
-    v0: &Point<i32>,
-    v1: &Point<i32>,
-    v2: &Point<i32>,
+    v0: &Point2<i32>,
+    v1: &Point2<i32>,
+    v2: &Point2<i32>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
@@ -184,10 +184,10 @@ fn draw_face_barycentric(
 
     let vec1_x_vec2 = Vec2::<i32>::cross(&vec1, &vec2) as f32;
 
-    // Calculate if point of the bounding box is inside triangle
+    // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..max_y {
-            let pv0 = Point { x, y } - v0;
+            let pv0 = Point2 { x, y } - v0;
             let vec1_x_pv0 = Vec2::<i32>::cross(&vec1, &pv0) as f32;
             let pv0_x_vec2 = Vec2::<i32>::cross(&pv0, &vec2) as f32;
 
@@ -202,19 +202,19 @@ fn draw_face_barycentric(
 }
 
 
-fn get_face_screen_coords(model: &Obj, face: &[u16], width_half: f32, height_half: f32) -> [Point<i32>; 3] {
+fn get_face_screen_coords(model: &Obj, face: &[u16], width_half: f32, height_half: f32) -> [Point2<i32>; 3] {
     let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
     let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
     let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
-    let point1 = Point::<i32> {
+    let point1 = Point2::<i32> {
         x: ((v1x + 1.) * width_half) as i32,
         y: ((v1y + 1.) * height_half) as i32,
     };
-    let point2 = Point::<i32> {
+    let point2 = Point2::<i32> {
         x: ((v2x + 1.) * width_half) as i32,
         y: ((v2y + 1.) * height_half) as i32,
     };
-    let point3 = Point::<i32> {
+    let point3 = Point2::<i32> {
         x: ((v3x + 1.) * width_half) as i32,
         y: ((v3y + 1.) * height_half) as i32,
     };

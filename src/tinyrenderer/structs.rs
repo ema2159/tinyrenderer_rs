@@ -1,12 +1,12 @@
 use std::ops;
 
 #[derive(Debug)]
-pub struct Point<T> {
+pub struct Point2<T> {
     pub x: T,
     pub y: T,
 }
 
-impl<T, U> ops::Add<&U> for Point<T>
+impl<T, U> ops::Add<&U> for Point2<T>
 where
     T: ops::Add<Output = T> + Copy,
     U: Algebr2D<T>,
@@ -22,7 +22,7 @@ where
     }
 }
 
-impl<T, U> ops::Mul<&U> for Point<T>
+impl<T, U> ops::Mul<&U> for Point2<T>
 where
     T: ops::Mul<Output = T> + Copy,
     U: Algebr2D<T>,
@@ -38,7 +38,7 @@ where
     }
 }
 
-impl<T, U> ops::Sub<&U> for Point<T>
+impl<T, U> ops::Sub<&U> for Point2<T>
 where
     T: ops::Sub<Output = T> + Copy,
     U: Algebr2D<T>,
@@ -54,7 +54,7 @@ where
     }
 }
 
-impl<T> Algebr2D<T> for Point<T>
+impl<T> Algebr2D<T> for Point2<T>
 where
     T: Copy,
 {
@@ -76,7 +76,7 @@ impl<T> Vec2<T>
 where
     T: ops::Sub<Output = T> + ops::Mul<Output = T> + Copy,
 {
-    pub fn from_points(point1: &Point<T>, point2: &Point<T>) -> Vec2<T> {
+    pub fn from_points(point1: &Point2<T>, point2: &Point2<T>) -> Vec2<T> {
         Vec2::<T> {
             x: point2.x - point1.x,
             y: point2.y - point1.y,
