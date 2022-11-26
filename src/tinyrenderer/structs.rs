@@ -49,4 +49,7 @@ where
             y: point2.y - point1.y,
         }
     }
+
+pub trait Algebr2D<T> {
+    fn as_vec(&self) -> Vec2<T>;
 }
