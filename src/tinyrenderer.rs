@@ -146,9 +146,9 @@ fn draw_flat_triangle(
 
 /// Implementation of line sweeping algorithm for triangle filling
 fn draw_face_line_sweeping(
-    v0: Point<i32>,
-    v1: Point<i32>,
-    v2: Point<i32>,
+    v0: &Point<i32>,
+    v1: &Point<i32>,
+    v2: &Point<i32>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
@@ -167,9 +167,9 @@ fn draw_face_line_sweeping(
 
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
-    v0: Point<i32>,
-    v1: Point<i32>,
-    v2: Point<i32>,
+    v0: &Point<i32>,
+    v1: &Point<i32>,
+    v2: &Point<i32>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
@@ -187,7 +187,7 @@ fn draw_face_barycentric(
     // Calculate if point of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..max_y {
-            let pv0 = Point { x, y } - &v0;
+            let pv0 = Point { x, y } - v0;
             let vec1_x_pv0 = Vec2::<i32>::cross(&vec1, &pv0) as f32;
             let pv0_x_vec2 = Vec2::<i32>::cross(&pv0, &vec2) as f32;
 
@@ -226,10 +226,11 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
             x: ((v3x + 1.) * width_half) as i32,
             y: ((v3y + 1.) * height_half) as i32,
         };
+        let screen_coords = [point1, point2, point3];
         // Draw face
         let mut rng = rand::thread_rng();
         let color = Rgba([rng.gen(), rng.gen(), rng.gen(), 255]);
-        draw_face_barycentric(point1, point2, point3, color, img);
+        draw_face_barycentric(&screen_coords[0], &screen_coords[1], &screen_coords[2], color, img);
     }
 }
 
