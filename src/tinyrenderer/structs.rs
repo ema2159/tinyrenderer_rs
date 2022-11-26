@@ -194,6 +194,10 @@ where
         }
     }
 
+    pub fn dot(vec0: Vec3<T>, vec1: Vec3<T>) -> T {
+        vec0.x * vec1.x + vec0.y * vec1.y + vec0.z * vec1.z
+    }
+
     pub fn cross(vec0: Vec3<T>, vec1: Vec3<T>) -> Vec3<T> {
         let x = (vec0.y * vec1.z) - (vec0.z * vec1.y);
         let y = (vec0.z * vec1.x) - (vec0.x * vec1.z);
