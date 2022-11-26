@@ -5,6 +5,8 @@ use obj::Obj;
 use rand::Rng;
 use tinyrenderer::structs::{Point2, Vec2};
 
+use self::structs::{Point3, Vec3};
+
 /// Implementation of the Bresenham's line algorithm
 /// Returns a vector of points with each point representing the coordinates of the pixels to be
 /// drawn.
@@ -225,6 +227,29 @@ fn get_face_screen_coords(
     };
     [point1, point2, point3]
 }
+
+fn get_face_world_coords(model: &Obj, face: &[u16]) -> [Point3<f32>; 3] {
+    let [v1x, v1y, v1z] = model.vertices[face[0] as usize].position;
+    let [v2x, v2y, v2z] = model.vertices[face[1] as usize].position;
+    let [v3x, v3y, v3z] = model.vertices[face[2] as usize].position;
+    let point1 = Point3::<f32> {
+        x: v1x,
+        y: v1y,
+        z: v1z,
+    };
+    let point2 = Point3::<f32> {
+        x: v2x,
+        y: v2y,
+        z: v2z,
+    };
+    let point3 = Point3::<f32> {
+        x: v3x,
+        y: v3y,
+        z: v3z,
+    };
+    [point1, point2, point3]
+}
+
 /// Draw triangle faces of given 3D object
 pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
