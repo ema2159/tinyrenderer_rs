@@ -184,7 +184,7 @@ pub struct Vec3<T> {
 
 impl<T> Vec3<T>
 where
-    T: ops::Sub<Output = T> + ops::Mul<Output = T> + Copy,
+    T: ops::Add<Output = T> + ops::Sub<Output = T> + ops::Mul<Output = T> + Copy,
 {
     pub fn from_points(point1: &Point3<T>, point2: &Point3<T>) -> Vec3<T> {
         Vec3::<T> {
@@ -199,6 +199,28 @@ where
         let y = (vec0.z * vec1.x) - (vec0.x * vec1.z);
         let z = (vec0.x * vec1.y) - (vec0.y * vec1.x);
         Vec3 { x, y, z }
+    }
+}
+
+impl Vec3<i32> {
+    pub fn normalize(self) -> Vec3<f32> {
+        let magnitude = (((self.x * self.x) + (self.y * self.y) + (self.z * self.z)) as f32).sqrt();
+        Vec3 {
+            x: self.x as f32 / magnitude,
+            y: self.y as f32 / magnitude,
+            z: self.z as f32 / magnitude,
+        }
+    }
+}
+
+impl Vec3<f32> {
+    pub fn normalize(self) -> Vec3<f32> {
+        let magnitude = (((self.x * self.x) + (self.y * self.y) + (self.z * self.z)) as f32).sqrt();
+        Vec3 {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+            z: self.z / magnitude,
+        }
     }
 }
 
