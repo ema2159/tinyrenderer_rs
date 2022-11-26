@@ -83,10 +83,8 @@ where
         }
     }
 
-    pub fn cross<U: Algebr2D<T>, V: Algebr2D<T>>(elem1: &U, elem2: &V) -> T {
-        let vec1 = elem1.as_vec();
-        let vec2 = elem2.as_vec();
-        (vec1.x * vec2.y) - (vec1.y * vec2.x)
+    pub fn cross(vec0: &Vec2<T>, vec1: &Vec2<T>) -> T {
+        (vec0.x * vec1.y) - (vec0.y * vec1.x)
     }
 }
 
