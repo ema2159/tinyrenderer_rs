@@ -64,7 +64,7 @@ fn line(start: &Point<i32>, end: &Point<i32>) -> Vec<Point<i32>> {
     result
 }
 
-// Draw line calculated with Bresenham's algorithm
+/// Draw line given a set of points
 pub fn draw_line(start: &Point<i32>, end: &Point<i32>, color: Rgba<u8>, img: &mut RgbaImage) {
     let line = line(&start, &end);
     let mut line_iter = line.iter();
@@ -73,6 +73,7 @@ pub fn draw_line(start: &Point<i32>, end: &Point<i32>, color: Rgba<u8>, img: &mu
     }
 }
 
+/// Draw mesh's wireframe
 pub fn draw_wireframe(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
@@ -141,6 +142,7 @@ fn draw_flat_triangle(
     }
 }
 
+/// Implementation of line sweeping algorithm for triangle filling
 fn draw_face_line_sweeping(
     v0: Point<i32>,
     v1: Point<i32>,
@@ -161,6 +163,43 @@ fn draw_face_line_sweeping(
     draw_flat_triangle(&v0, &v1, &v3, color, img);
 }
 
+/// Implementation of barycentric algorithm for triangle filling
+fn draw_face_barycentric(
+    v0: Point<i32>,
+    v1: Point<i32>,
+    v2: Point<i32>,
+    color: Rgba<u8>,
+    img: &mut RgbaImage,
+) {
+    // Define triangle bounding box
+    let max_x = std::cmp::max(v0.x, std::cmp::max(v1.x, v2.x));
+    let max_y = std::cmp::max(v0.y, std::cmp::max(v1.y, v2.y));
+    let min_x = std::cmp::min(v0.x, std::cmp::min(v1.x, v2.x));
+    let min_y = std::cmp::min(v0.y, std::cmp::min(v1.y, v2.y));
+
+    let vec1 = Vec2::<i32>::from_points(&v0, &v1);
+    let vec2 = Vec2::<i32>::from_points(&v0, &v2);
+
+    let vec1_x_vec2 = Vec2::<i32>::cross(&vec1, &vec2) as f32;
+
+    // Calculate if point of the bounding box is inside triangle
+    for x in min_x..=max_x {
+        for y in min_y..max_y {
+            let pv0 = Point { x, y } - &v0;
+            let vec1_x_pv0 = Vec2::<i32>::cross(&vec1, &pv0) as f32;
+            let pv0_x_vec2 = Vec2::<i32>::cross(&pv0, &vec2) as f32;
+
+            let s = vec1_x_pv0 / vec1_x_vec2;
+            let t = pv0_x_vec2 / vec1_x_vec2;
+
+            if s >= 0. && t >= 0. && s + t <= 1. {
+                img.put_pixel(x as u32, y as u32, color);
+            }
+        }
+    }
+}
+
+/// Draw triangle faces of given 3D object
 pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
@@ -186,7 +225,7 @@ pub fn draw_faces(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
             y: ((v3y + 1.) * height_half) as i32,
         };
         // Draw face
-        draw_face_line_sweeping(point1, point2, point3, color, img);
+        draw_face_barycentric(point1, point2, point3, color, img);
     }
 }
 
