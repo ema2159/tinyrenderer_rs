@@ -2,7 +2,6 @@
 
 use image::{Rgba, RgbaImage};
 use obj::Obj;
-use rand::Rng;
 use tinyrenderer::structs::{Point2, Vec2};
 
 use self::structs::{Point3, Vec3};
@@ -147,13 +146,10 @@ fn draw_flat_triangle(
 }
 
 /// Implementation of line sweeping algorithm for triangle filling
-fn draw_face_line_sweeping(
-    v0: &Point2<i32>,
-    v1: &Point2<i32>,
-    v2: &Point2<i32>,
-    color: Rgba<u8>,
-    img: &mut RgbaImage,
-) {
+fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, img: &mut RgbaImage) {
+    let v0 = &screen_coords[0];
+    let v1 = &screen_coords[1];
+    let v2 = &screen_coords[2];
     let mut points = [v0, v1, v2];
     points.sort_by_key(|k| k.y);
     let [v0, v1, v2] = points;
@@ -169,12 +165,13 @@ fn draw_face_line_sweeping(
 
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
-    v0: &Point2<i32>,
-    v1: &Point2<i32>,
-    v2: &Point2<i32>,
+    screen_coords: &[Point2<i32>; 3],
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
+    let v0 = &screen_coords[0];
+    let v1 = &screen_coords[1];
+    let v2 = &screen_coords[2];
     // Define triangle bounding box
     let max_x = std::cmp::max(v0.x, std::cmp::max(v1.x, v2.x));
     let max_y = std::cmp::max(v0.y, std::cmp::max(v1.y, v2.y));
@@ -273,7 +270,6 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
         let light_dir = Vec3 { x: 0., y: 0., z: -1. };
         let intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
-        let mut rng = rand::thread_rng();
         if intensity > 0. {
             let color = Rgba([
                 (255. * intensity) as u8,
@@ -281,13 +277,7 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
                 (255. * intensity) as u8,
                 255,
             ]);
-            draw_face_barycentric(
-                &screen_coords[0],
-                &screen_coords[1],
-                &screen_coords[2],
-                color,
-                img,
-            );
+            draw_face_barycentric(&screen_coords, color, img);
         }
     }
 }
