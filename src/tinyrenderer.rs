@@ -166,35 +166,41 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
     screen_coords: &[Point2<i32>; 3],
+    world_coords: &[Point3<f32>; 3],
+    z_buffer: &mut Vec<Vec<f32>>,
     color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
-    let v0 = &screen_coords[0];
-    let v1 = &screen_coords[1];
-    let v2 = &screen_coords[2];
+    let [v0_s, v1_s, v2_s] = &screen_coords;
+    let [v0_w, v1_w, v2_w] = &world_coords;
     // Define triangle bounding box
-    let max_x = std::cmp::max(v0.x, std::cmp::max(v1.x, v2.x));
-    let max_y = std::cmp::max(v0.y, std::cmp::max(v1.y, v2.y));
-    let min_x = std::cmp::min(v0.x, std::cmp::min(v1.x, v2.x));
-    let min_y = std::cmp::min(v0.y, std::cmp::min(v1.y, v2.y));
+    let max_x = std::cmp::max(v0_s.x, std::cmp::max(v1_s.x, v2_s.x));
+    let max_y = std::cmp::max(v0_s.y, std::cmp::max(v1_s.y, v2_s.y));
+    let min_x = std::cmp::min(v0_s.x, std::cmp::min(v1_s.x, v2_s.x));
+    let min_y = std::cmp::min(v0_s.y, std::cmp::min(v1_s.y, v2_s.y));
 
-    let vec1 = Vec2::<i32>::from_points(&v0, &v1);
-    let vec2 = Vec2::<i32>::from_points(&v0, &v2);
+    let vec1 = Vec2::<i32>::from_points(&v0_s, &v1_s);
+    let vec2 = Vec2::<i32>::from_points(&v0_s, &v2_s);
 
     let vec1_x_vec2 = Vec2::<i32>::cross(&vec1, &vec2) as f32;
 
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..max_y {
-            let pv0 = Vec2::from_points(&v0, &Point2::<i32> { x, y });
+            let pv0 = Vec2::from_points(&v0_s, &Point2::<i32> { x, y });
             let vec1_x_pv0 = Vec2::<i32>::cross(&vec1, &pv0) as f32;
             let pv0_x_vec2 = Vec2::<i32>::cross(&pv0, &vec2) as f32;
-
+            // Barycentric coordinates
             let s = vec1_x_pv0 / vec1_x_vec2;
             let t = pv0_x_vec2 / vec1_x_vec2;
+            let t_s_1 = 1. - (t + s);
 
-            if s >= 0. && t >= 0. && s + t <= 1. {
-                img.put_pixel(x as u32, y as u32, color);
+            if s >= 0. && t >= 0. && t_s_1 <= 1. {
+                let z_value = t_s_1 * v0_w.z + s * v1_w.z + t * v2_w.z;
+                if z_buffer[x as usize][y as usize] < z_value {
+                    z_buffer[x as usize][y as usize] = z_value;
+                    img.put_pixel(x as u32, y as u32, color);
+                }
             }
         }
     }
@@ -263,11 +269,17 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
         ((img.height() - 1) / 2) as f32,
     );
 
+    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
     for face in faces.chunks(3) {
         let screen_coords =
             get_face_screen_coords(&model, face, screen_width_half, screen_height_half);
         let world_coords = get_face_world_coords(&model, face);
-        let light_dir = Vec3 { x: 0., y: 0., z: -1. };
+
+        let light_dir = Vec3 {
+            x: 0.,
+            y: 0.,
+            z: -1.,
+        };
         let intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
         if intensity > 0. {
@@ -277,7 +289,7 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
                 (255. * intensity) as u8,
                 255,
             ]);
-            draw_face_barycentric(&screen_coords, color, img);
+            draw_face_barycentric(&screen_coords, &world_coords, &mut z_buffer, color, img);
         }
     }
 }
