@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     window.set_lazy(true);
     window.set_max_fps(60);
 
-    let texture = piston_window::Texture::from_image(
+    let rendered_img = piston_window::Texture::from_image(
         &mut window.create_texture_context(),
         &img,
         &piston_window::TextureSettings::new(),
@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     while let Some(event) = window.next() {
         window.draw_2d(&event, |c, g, _| {
             piston_window::clear([0.0, 0.0, 0.0, 1.0], g);
-            piston_window::image(&texture, c.transform, g);
+            piston_window::image(&rendered_img, c.transform, g);
         });
     }
     Ok(())
