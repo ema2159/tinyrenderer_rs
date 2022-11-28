@@ -195,7 +195,7 @@ fn draw_face_barycentric(
             let t = pv0_x_vec2 / vec1_x_vec2;
             let t_s_1 = 1. - (t + s);
 
-            if s >= 0. && t >= 0. && t_s_1 <= 1. {
+                if s >= 0. && t >= 0. && t_s_1 >= 0. {
                 let z_value = t_s_1 * v0_w.z + s * v1_w.z + t * v2_w.z;
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
