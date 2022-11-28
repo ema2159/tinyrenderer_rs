@@ -251,6 +251,20 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f
     };
     [point0, point1, point2]
 }
+
+fn get_face_texture_coords(
+    model: &Obj<TexturedVertex>,
+    face: &[u16],
+    screen_width: f32,
+    screen_height: f32,
+) -> [[u32; 2]; 3] {
+    let [v0x, v0y, _] = model.vertices[face[0] as usize].position;
+    let [v1x, v1y, _] = model.vertices[face[1] as usize].position;
+    let [v2x, v2y, _] = model.vertices[face[2] as usize].position;
+    let texcoord0 = [(v0x * screen_width) as u32, (v0y * screen_height) as u32];
+    let texcoord1 = [(v1x * screen_width) as u32, (v1y * screen_height) as u32];
+    let texcoord2 = [(v2x * screen_width) as u32, (v2y * screen_height) as u32];
+    [texcoord0, texcoord1, texcoord2]
 }
 
 fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vec3<f32>) -> f32 {
