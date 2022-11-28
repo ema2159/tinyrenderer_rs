@@ -212,9 +212,13 @@ fn get_face_screen_coords(
     half_screen_width: f32,
     half_screen_height: f32,
 ) -> [Point2<i32>; 3] {
-    let [v1x, v1y, _] = model.vertices[face[0] as usize].position;
-    let [v2x, v2y, _] = model.vertices[face[1] as usize].position;
-    let [v3x, v3y, _] = model.vertices[face[2] as usize].position;
+    let [v0x, v0y, _] = model.vertices[face[0] as usize].position;
+    let [v1x, v1y, _] = model.vertices[face[1] as usize].position;
+    let [v2x, v2y, _] = model.vertices[face[2] as usize].position;
+    let point0 = Point2::<i32> {
+        x: ((v0x + 1.) * half_screen_width) as i32,
+        y: ((v0y + 1.) * half_screen_height) as i32,
+    };
     let point1 = Point2::<i32> {
         x: ((v1x + 1.) * half_screen_width) as i32,
         y: ((v1y + 1.) * half_screen_height) as i32,
@@ -223,17 +227,18 @@ fn get_face_screen_coords(
         x: ((v2x + 1.) * half_screen_width) as i32,
         y: ((v2y + 1.) * half_screen_height) as i32,
     };
-    let point3 = Point2::<i32> {
-        x: ((v3x + 1.) * half_screen_width) as i32,
-        y: ((v3y + 1.) * half_screen_height) as i32,
-    };
-    [point1, point2, point3]
+    [point0, point1, point2]
 }
 
 fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f32>; 3] {
-    let [v1x, v1y, v1z] = model.vertices[face[0] as usize].position;
-    let [v2x, v2y, v2z] = model.vertices[face[1] as usize].position;
-    let [v3x, v3y, v3z] = model.vertices[face[2] as usize].position;
+    let [v0x, v0y, v0z] = model.vertices[face[0] as usize].position;
+    let [v1x, v1y, v1z] = model.vertices[face[1] as usize].position;
+    let [v2x, v2y, v2z] = model.vertices[face[2] as usize].position;
+    let point0 = Point3::<f32> {
+        x: v0x,
+        y: v0y,
+        z: v0z,
+    };
     let point1 = Point3::<f32> {
         x: v1x,
         y: v1y,
@@ -244,12 +249,8 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f
         y: v2y,
         z: v2z,
     };
-    let point3 = Point3::<f32> {
-        x: v3x,
-        y: v3y,
-        z: v3z,
-    };
-    [point1, point2, point3]
+    [point0, point1, point2]
+}
 }
 
 fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vec3<f32>) -> f32 {
