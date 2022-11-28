@@ -33,7 +33,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgb8();
+
+    use std::time::Instant;
+    let now = Instant::now();
     draw_faces(model, &mut img);
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 
     image::imageops::flip_vertical_in_place(&mut img);
 
