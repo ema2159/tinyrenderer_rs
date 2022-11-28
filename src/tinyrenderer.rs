@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use image::{Rgba, RgbaImage};
-use obj::Obj;
+use obj::{Obj, TexturedVertex};
 use tinyrenderer::structs::{Point2, Vec2};
 
 use self::structs::{Point3, Vec3};
@@ -77,7 +77,7 @@ pub fn draw_line(start: &Point2<i32>, end: &Point2<i32>, color: Rgba<u8>, img: &
 }
 
 /// Draw mesh's wireframe
-pub fn draw_wireframe(model: Obj, color: Rgba<u8>, img: &mut RgbaImage) {
+pub fn draw_wireframe(model: Obj<TexturedVertex>, color: Rgba<u8>, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
     let (width_half, height_half) = (
@@ -207,7 +207,7 @@ fn draw_face_barycentric(
 }
 
 fn get_face_screen_coords(
-    model: &Obj,
+    model: &Obj<TexturedVertex>,
     face: &[u16],
     half_screen_width: f32,
     half_screen_height: f32,
@@ -230,7 +230,7 @@ fn get_face_screen_coords(
     [point1, point2, point3]
 }
 
-fn get_face_world_coords(model: &Obj, face: &[u16]) -> [Point3<f32>; 3] {
+fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f32>; 3] {
     let [v1x, v1y, v1z] = model.vertices[face[0] as usize].position;
     let [v2x, v2y, v2z] = model.vertices[face[1] as usize].position;
     let [v3x, v3y, v3z] = model.vertices[face[2] as usize].position;
@@ -261,7 +261,7 @@ fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vec3<f32>) -
 }
 
 /// Draw triangle faces of given 3D object
-pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
+pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
     let (screen_width_half, screen_height_half) = (

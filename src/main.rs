@@ -5,7 +5,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use obj::{load_obj, Obj};
+use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
 use std::fs::File;
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Load model
     let input = BufReader::new(File::open(&obj_path)?);
-    let model: Obj = load_obj(input)?;
+    let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
     let texture = image::open(texture_path)
