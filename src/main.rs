@@ -30,13 +30,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
-    let texture = image::open(texture_path)
+    let mut texture = image::open(texture_path)
         .expect("Opening image failed")
-        .into_rgb8();
+        .into_rgba8();
+
+    image::imageops::flip_vertical_in_place(&mut texture);
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(model, &mut img);
+    draw_faces(model, &mut img, texture);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 

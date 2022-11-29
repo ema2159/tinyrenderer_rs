@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use image::{Rgba, RgbaImage};
+use image::{Pixel, Rgba, RgbaImage};
 use obj::{Obj, TexturedVertex};
 use tinyrenderer::structs::{Point2, Vec2};
 
@@ -167,12 +167,15 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 fn draw_face_barycentric(
     screen_coords: &[Point2<i32>; 3],
     world_coords: &[Point3<f32>; 3],
+    texture_coords: &[[f32; 2]; 3],
+    texture: &RgbaImage,
+    light_intensity: f32,
     z_buffer: &mut Vec<Vec<f32>>,
-    color: Rgba<u8>,
     img: &mut RgbaImage,
 ) {
     let [v0_s, v1_s, v2_s] = &screen_coords;
     let [v0_w, v1_w, v2_w] = &world_coords;
+    let [v0_t, v1_t, v2_t] = &texture_coords;
     // Define triangle bounding box
     let max_x = std::cmp::max(v0_s.x, std::cmp::max(v1_s.x, v2_s.x));
     let max_y = std::cmp::max(v0_s.y, std::cmp::max(v1_s.y, v2_s.y));
@@ -199,7 +202,13 @@ fn draw_face_barycentric(
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
-                    img.put_pixel(x as u32, y as u32, color);
+                    let tex_x_value = t_s_1 * v0_t[0] + t * v1_t[0] + s * v2_t[0];
+                    let tex_y_value = t_s_1 * v0_t[1] + t * v1_t[1] + s * v2_t[1];
+                    let mut tex_point = texture
+                        .get_pixel(tex_x_value as u32, tex_y_value as u32)
+                        .to_rgba();
+                    tex_point.apply_without_alpha(|ch| ((ch as f32) * light_intensity) as u8);
+                    img.put_pixel(x as u32, y as u32, tex_point);
                 }
             }
         }
@@ -255,15 +264,15 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f
 fn get_face_texture_coords(
     model: &Obj<TexturedVertex>,
     face: &[u16],
-    screen_width: f32,
-    screen_height: f32,
-) -> [[u32; 2]; 3] {
-    let [v0x, v0y, _] = model.vertices[face[0] as usize].position;
-    let [v1x, v1y, _] = model.vertices[face[1] as usize].position;
-    let [v2x, v2y, _] = model.vertices[face[2] as usize].position;
-    let texcoord0 = [(v0x * screen_width) as u32, (v0y * screen_height) as u32];
-    let texcoord1 = [(v1x * screen_width) as u32, (v1y * screen_height) as u32];
-    let texcoord2 = [(v2x * screen_width) as u32, (v2y * screen_height) as u32];
+    texture_width: f32,
+    texture_height: f32,
+) -> [[f32; 2]; 3] {
+    let [v0x, v0y, _] = model.vertices[face[0] as usize].texture;
+    let [v1x, v1y, _] = model.vertices[face[1] as usize].texture;
+    let [v2x, v2y, _] = model.vertices[face[2] as usize].texture;
+    let texcoord0 = [(v0x * texture_width) - 1., (v0y * texture_height) - 1.];
+    let texcoord1 = [(v1x * texture_width) - 1., (v1y * texture_height) - 1.];
+    let texcoord2 = [(v2x * texture_width) - 1., (v2y * texture_height) - 1.];
     [texcoord0, texcoord1, texcoord2]
 }
 
@@ -276,7 +285,7 @@ fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vec3<f32>) -
 }
 
 /// Draw triangle faces of given 3D object
-pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage) {
+pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
     let (screen_width_half, screen_height_half) = (
@@ -289,22 +298,30 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage) {
         let screen_coords =
             get_face_screen_coords(&model, face, screen_width_half, screen_height_half);
         let world_coords = get_face_world_coords(&model, face);
+        let texture_coords = get_face_texture_coords(
+            &model,
+            face,
+            texture.width() as f32,
+            texture.height() as f32,
+        );
 
         let light_dir = Vec3 {
             x: 0.,
             y: 0.,
             z: -1.,
         };
-        let intensity = calc_light_intensity(&world_coords, light_dir);
+        let light_intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
-        if intensity > 0. {
-            let color = Rgba([
-                (255. * intensity) as u8,
-                (255. * intensity) as u8,
-                (255. * intensity) as u8,
-                255,
-            ]);
-            draw_face_barycentric(&screen_coords, &world_coords, &mut z_buffer, color, img);
+        if light_intensity > 0. {
+            draw_face_barycentric(
+                &screen_coords,
+                &world_coords,
+                &texture_coords,
+                &texture,
+                light_intensity,
+                &mut z_buffer,
+                img,
+            );
         }
     }
 }
