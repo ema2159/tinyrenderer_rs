@@ -1,6 +1,7 @@
 extern crate image;
 extern crate obj;
 extern crate piston_window;
+extern crate nalgebra;
 
 mod tinyrenderer;
 
