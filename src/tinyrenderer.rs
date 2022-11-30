@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point3, Vector2, Vector3};
+use nalgebra::{Point2, Point4, Vector2, Vector4};
 use obj::{Obj, TexturedVertex};
 
 /// Implementation of the Bresenham's line algorithm
@@ -158,7 +158,7 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
     screen_coords: &[Point2<i32>; 3],
-    world_coords: &[Point3<f32>; 3],
+    world_coords: &[Point4<f32>; 3],
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
     light_intensity: f32,
@@ -231,13 +231,24 @@ fn get_face_screen_coords(
     [point0, point1, point2]
 }
 
-fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point3<f32>; 3] {
+fn world_to_screen_cords(
+    world_coords: Point4<f32>,
+    half_screen_width: f32,
+    half_screen_height: f32
+) -> Point2<i32> {
+    Point2::<i32>::new(
+        ((world_coords.x + 1.) * half_screen_width) as i32,
+        ((world_coords.y + 1.) * half_screen_height) as i32,
+    )
+}
+
+fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f32>; 3] {
     let [v0x, v0y, v0z] = model.vertices[face[0] as usize].position;
     let [v1x, v1y, v1z] = model.vertices[face[1] as usize].position;
     let [v2x, v2y, v2z] = model.vertices[face[2] as usize].position;
-    let point0 = Point3::<f32>::new(v0x, v0y, v0z);
-    let point1 = Point3::<f32>::new(v1x, v1y, v1z);
-    let point2 = Point3::<f32>::new(v2x, v2y, v2z);
+    let point0 = Point4::<f32>::new(v0x, v0y, v0z, 1.);
+    let point1 = Point4::<f32>::new(v1x, v1y, v1z, 1.);
+    let point2 = Point4::<f32>::new(v2x, v2y, v2z, 1.);
     [point0, point1, point2]
 }
 
@@ -256,11 +267,11 @@ fn get_face_texture_coords(
     [texcoord0, texcoord1, texcoord2]
 }
 
-fn calc_light_intensity(world_coords: &[Point3<f32>; 3], light_dir: Vector3<f32>) -> f32 {
-    let vec0 = Vector3::from(world_coords[0] - world_coords[1]);
-    let vec1 = Vector3::from(world_coords[0] - world_coords[2]);
-    let norm = vec1.cross(&vec0).normalize();
-    norm.dot(&light_dir)
+fn calc_light_intensity(world_coords: &[Point4<f32>; 3], light_dir: Vector4<f32>) -> f32 {
+    let vec0 = Vector4::from(world_coords[0] - world_coords[1]);
+    let vec1 = Vector4::from(world_coords[0] - world_coords[2]);
+    let norm = vec1.xyz().cross(&vec0.xyz()).normalize();
+    norm.dot(&light_dir.xyz())
 }
 
 /// Draw triangle faces of given 3D object
@@ -284,7 +295,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
             texture.height() as f32,
         );
 
-        let light_dir = Vector3::new(0., 0., -1.);
+        let light_dir = Vector4::new(0., 0., -1., 0.);
         let light_intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
         if light_intensity > 0. {
