@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::convert::TryInto;
+
 use image::{Pixel, Rgba, RgbaImage};
 use nalgebra::{Point2, Point4, Vector2, Vector4};
 use obj::{Obj, TexturedVertex};
@@ -231,10 +233,10 @@ fn get_face_screen_coords(
     [point0, point1, point2]
 }
 
-fn world_to_screen_cords(
+fn world_to_screen_coords(
     world_coords: Point4<f32>,
     half_screen_width: f32,
-    half_screen_height: f32
+    half_screen_height: f32,
 ) -> Point2<i32> {
     Point2::<i32>::new(
         ((world_coords.x + 1.) * half_screen_width) as i32,
@@ -278,16 +280,20 @@ fn calc_light_intensity(world_coords: &[Point4<f32>; 3], light_dir: Vector4<f32>
 pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
-    let (screen_width_half, screen_height_half) = (
+    let (half_screen_width, half_screen_height) = (
         ((img.width() - 1) / 2) as f32,
         ((img.height() - 1) / 2) as f32,
     );
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
     for face in faces.chunks(3) {
-        let screen_coords =
-            get_face_screen_coords(&model, face, screen_width_half, screen_height_half);
         let world_coords = get_face_world_coords(&model, face);
+        let screen_coords: [Point2<i32>; 3] = world_coords
+            .iter()
+            .map(|coord| world_to_screen_coords(*coord, half_screen_width, half_screen_height))
+            .collect::<Vec<Point2<i32>>>()
+            .try_into()
+            .unwrap();
         let texture_coords = get_face_texture_coords(
             &model,
             face,
