@@ -176,8 +176,8 @@ fn draw_face_barycentric(
     let min_x = std::cmp::min(v0_s.x, std::cmp::min(v1_s.x, v2_s.x));
     let min_y = std::cmp::min(v0_s.y, std::cmp::min(v1_s.y, v2_s.y));
 
-    let vec1 = Vector2::<i32>::from(v1_s - v0_s);
-    let vec2 = Vector2::<i32>::from(v2_s - v0_s);
+    let vec1: Vector2::<i32> = v1_s - v0_s;
+    let vec2: Vector2::<i32> = v2_s - v0_s;
 
     let vec1_x_vec2 = vec1.perp(&vec2) as f32;
 
@@ -270,8 +270,8 @@ fn get_face_texture_coords(
 }
 
 fn calc_light_intensity(world_coords: &[Point4<f32>; 3], light_dir: Vector4<f32>) -> f32 {
-    let vec0 = Vector4::from(world_coords[0] - world_coords[1]);
-    let vec1 = Vector4::from(world_coords[0] - world_coords[2]);
+    let vec0: Vector4<f32> = world_coords[0] - world_coords[1];
+    let vec1: Vector4<f32> = world_coords[0] - world_coords[2];
     let norm = vec1.xyz().cross(&vec0.xyz()).normalize();
     norm.dot(&light_dir.xyz())
 }
