@@ -3,7 +3,7 @@
 use std::convert::TryInto;
 
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point4, Vector2, Vector4, Matrix4, clamp, Point3};
+use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
 /// Implementation of the Bresenham's line algorithm
@@ -163,21 +163,23 @@ fn draw_face_barycentric(
     world_coords: &[Point4<f32>; 3],
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
-    light_intensity: f32,
+    normal_coords: &[Vector3<f32>; 3],
+    light: Vector3<f32>,
     z_buffer: &mut Vec<Vec<f32>>,
     img: &mut RgbaImage,
 ) {
     let [v0_s, v1_s, v2_s] = &screen_coords;
     let [v0_w, v1_w, v2_w] = &world_coords;
     let [v0_t, v1_t, v2_t] = &texture_coords;
+    let [v0_n, v1_n, v2_n] = &normal_coords;
     // Define triangle bounding box
     let max_x = std::cmp::max(v0_s.x, std::cmp::max(v1_s.x, v2_s.x));
     let max_y = std::cmp::max(v0_s.y, std::cmp::max(v1_s.y, v2_s.y));
     let min_x = std::cmp::min(v0_s.x, std::cmp::min(v1_s.x, v2_s.x));
     let min_y = std::cmp::min(v0_s.y, std::cmp::min(v1_s.y, v2_s.y));
 
-    let vec1: Vector2::<i32> = v1_s - v0_s;
-    let vec2: Vector2::<i32> = v2_s - v0_s;
+    let vec1: Vector2<i32> = v1_s - v0_s;
+    let vec2: Vector2<i32> = v2_s - v0_s;
 
     let vec1_x_vec2 = vec1.perp(&vec2) as f32;
 
@@ -194,6 +196,8 @@ fn draw_face_barycentric(
 
             if s >= 0. && t >= 0. && t_s_1 >= 0. {
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
+                let normal = t_s_1 * v0_n + t * v1_n + s * v2_n;
+                let light_intensity = normal.dot(&light);
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
                     let tex_x_value = t_s_1 * v0_t.x + t * v1_t.x + s * v2_t.x;
@@ -269,11 +273,14 @@ fn get_face_texture_coords(
     [texcoord0, texcoord1, texcoord2]
 }
 
-fn calc_light_intensity(world_coords: &[Point4<f32>; 3], light_dir: Vector4<f32>) -> f32 {
-    let vec0: Vector4<f32> = world_coords[0] - world_coords[1];
-    let vec1: Vector4<f32> = world_coords[0] - world_coords[2];
-    let norm = vec1.xyz().cross(&vec0.xyz()).normalize();
-    norm.dot(&light_dir.xyz())
+fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3<f32>; 3] {
+    let [v0x, v0y, v0z] = model.vertices[face[0] as usize].normal;
+    let [v1x, v1y, v1z] = model.vertices[face[1] as usize].normal;
+    let [v2x, v2y, v2z] = model.vertices[face[2] as usize].normal;
+    let normal0 = Vector3::<f32>::new(v0x, v0y, v0z);
+    let normal1 = Vector3::<f32>::new(v1x, v1y, v1z);
+    let normal2 = Vector3::<f32>::new(v2x, v2y, v2z);
+    [normal0, normal1, normal2]
 }
 
 /// Draw triangle faces of given 3D object
@@ -288,7 +295,8 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
     let camera = Point3::new(0., 0., 3.);
-    let camera = Matrix4::<f32>::new(1., 0. ,0., 0.,
+    #[rustfmt::skip]
+    let persp = Matrix4::<f32>::new(1., 0. ,0., 0.,
                                      0., 1., 0., 0.,
                                      0., 0., 1., 0.,
                                      0., 0., -1./camera.z, 1.);
@@ -297,7 +305,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
         let mut world_coords = get_face_world_coords(&model, face);
         for coord in world_coords.iter_mut() {
             // println!("Pre {}", coord);
-            *coord = Point4::from(camera * coord.coords);
+            *coord = Point4::from(persp * coord.coords);
             *coord /= coord.w;
             // println!("Post {}", coord);
             coord.x = clamp(coord.x, -1.0, 1.0);
@@ -316,20 +324,19 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
             texture.width() as f32,
             texture.height() as f32,
         );
+        let normal_coords = get_face_normal_coords(&model, face);
 
-        let light_dir = Vector4::new(0., 0., -1., 0.);
-        let light_intensity = calc_light_intensity(&world_coords, light_dir);
+        let light = Vector3::new(0., 0., 1.);
         // Draw face
-        if light_intensity > 0. {
-            draw_face_barycentric(
-                &screen_coords,
-                &world_coords,
-                &texture_coords,
-                &texture,
-                light_intensity,
-                &mut z_buffer,
-                img,
-            );
-        }
+        draw_face_barycentric(
+            &screen_coords,
+            &world_coords,
+            &texture_coords,
+            &texture,
+            &normal_coords,
+            light,
+            &mut z_buffer,
+            img,
+        );
     }
 }
