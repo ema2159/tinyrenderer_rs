@@ -3,7 +3,7 @@
 use std::convert::TryInto;
 
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point4, Vector2, Vector4};
+use nalgebra::{Point2, Point4, Vector2, Vector4, Matrix4, clamp, Point3};
 use obj::{Obj, TexturedVertex};
 
 /// Implementation of the Bresenham's line algorithm
@@ -286,8 +286,24 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     );
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
+
+    let camera = Point3::new(0., 0., 3.);
+    let camera = Matrix4::<f32>::new(1., 0. ,0., 0.,
+                                     0., 1., 0., 0.,
+                                     0., 0., 1., 0.,
+                                     0., 0., -1./camera.z, 1.);
+
     for face in faces.chunks(3) {
-        let world_coords = get_face_world_coords(&model, face);
+        let mut world_coords = get_face_world_coords(&model, face);
+        for coord in world_coords.iter_mut() {
+            // println!("Pre {}", coord);
+            *coord = Point4::from(camera * coord.coords);
+            *coord /= coord.w;
+            // println!("Post {}", coord);
+            coord.x = clamp(coord.x, -1.0, 1.0);
+            coord.y = clamp(coord.y, -1.0, 1.0);
+            coord.z = clamp(coord.z, -1.0, 1.0);
+        }
         let screen_coords: [Point2<i32>; 3] = world_coords
             .iter()
             .map(|coord| world_to_screen_coords(*coord, half_screen_width, half_screen_height))
