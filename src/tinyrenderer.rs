@@ -169,10 +169,11 @@ fn draw_face_barycentric(
     let [v0_t, v1_t, v2_t] = &texture_coords;
     let [v0_n, v1_n, v2_n] = &normal_coords;
     // Define triangle bounding box
-    let max_x = (f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) + 1.) as i32;
-    let max_y = (f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) + 1.) as i32;
-    let min_x = (f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) + 1.) as i32;
-    let min_y = (f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) + 1.) as i32;
+    let max_x = f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) as i32;
+    let max_y = f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) as i32;
+    let min_x = f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) as i32;
+    let min_y = f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) as i32;
+
 
     let vec1: Vector2<f32> = (v1_w - v0_w).xy();
     let vec2: Vector2<f32> = (v2_w - v0_w).xy();
@@ -181,7 +182,7 @@ fn draw_face_barycentric(
 
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
-        for y in min_y..max_y {
+        for y in min_y..=max_y {
             let pv0 = Vector2::from(Point2::<f32>::new(x as f32, y as f32) - v0_w.xy());
             let vec1_x_pv0 = vec1.perp(&pv0) as f32;
             let pv0_x_vec2 = pv0.perp(&vec2) as f32;
