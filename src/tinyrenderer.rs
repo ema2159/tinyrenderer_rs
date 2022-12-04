@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use std::convert::TryInto;
-
 use image::{Pixel, Rgba, RgbaImage};
 use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, RowVector4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
@@ -171,10 +169,10 @@ fn draw_face_barycentric(
     let [v0_t, v1_t, v2_t] = &texture_coords;
     let [v0_n, v1_n, v2_n] = &normal_coords;
     // Define triangle bounding box
-    let max_x = f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) as i32;
-    let max_y = f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) as i32;
-    let min_x = f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) as i32;
-    let min_y = f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) as i32;
+    let max_x = (f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) + 1.) as i32;
+    let max_y = (f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) + 1.) as i32;
+    let min_x = (f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) + 1.) as i32;
+    let min_y = (f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) + 1.) as i32;
 
     let vec1: Vector2<f32> = (v1_w - v0_w).xy();
     let vec2: Vector2<f32> = (v2_w - v0_w).xy();
