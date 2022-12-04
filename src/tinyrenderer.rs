@@ -276,10 +276,14 @@ fn get_projection_matrix(eye_pos: Point3<f32>, model_pos: Point3<f32>) -> Matrix
     ])
 }
 
-fn get_viewport_matrix(screen_width: u32, screen_height: u32, depth: u32) -> Matrix4<f32> {
-    let half_w = ((screen_width - 1) / 2) as f32;
-    let half_h = ((screen_height - 1) / 2) as f32;
-    let half_d = ((depth - 1) / 2) as f32;
+fn get_viewport_matrix(
+    screen_width: f32,
+    screen_height: f32,
+    depth: f32,
+) -> Matrix4<f32> {
+    let half_w = (screen_width - 1.) / 2.;
+    let half_h = (screen_height - 1.) / 2.;
+    let half_d = (depth - 1.) / 2.;
     Matrix4::<f32>::from_rows(&[
         RowVector4::new(half_w, 0., 0., half_w),
         RowVector4::new(0., half_h, 0., half_h),
@@ -298,8 +302,10 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let camera = Point3::new(1., 1., 3.);
     let model_pos = Point3::new(0., 0., 0.);
 
+    let (width, height) = (img.width() as f32, img.height() as f32);
+
     let model_view = get_model_view_matrix(camera, model_pos, Vector3::new(0., 1., 0.));
-    let viewport = get_viewport_matrix(img.height(), img.width(), 255);
+    let viewport = get_viewport_matrix(height, width, 1024.);
     let projection = get_projection_matrix(camera, model_pos);
 
     for face in faces.chunks(3) {
