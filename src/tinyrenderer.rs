@@ -159,7 +159,6 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 
 /// Implementation of barycentric algorithm for triangle filling
 fn draw_face_barycentric(
-    screen_coords: &[Point2<i32>; 3],
     world_coords: &[Point4<f32>; 3],
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
@@ -168,25 +167,24 @@ fn draw_face_barycentric(
     z_buffer: &mut Vec<Vec<f32>>,
     img: &mut RgbaImage,
 ) {
-    let [v0_s, v1_s, v2_s] = &screen_coords;
     let [v0_w, v1_w, v2_w] = &world_coords;
     let [v0_t, v1_t, v2_t] = &texture_coords;
     let [v0_n, v1_n, v2_n] = &normal_coords;
     // Define triangle bounding box
-    let max_x = std::cmp::max(v0_s.x, std::cmp::max(v1_s.x, v2_s.x));
-    let max_y = std::cmp::max(v0_s.y, std::cmp::max(v1_s.y, v2_s.y));
-    let min_x = std::cmp::min(v0_s.x, std::cmp::min(v1_s.x, v2_s.x));
-    let min_y = std::cmp::min(v0_s.y, std::cmp::min(v1_s.y, v2_s.y));
+    let max_x = f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) as i32;
+    let max_y = f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) as i32;
+    let min_x = f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) as i32;
+    let min_y = f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) as i32;
 
-    let vec1: Vector2<i32> = v1_s - v0_s;
-    let vec2: Vector2<i32> = v2_s - v0_s;
+    let vec1: Vector2<f32> = (v1_w - v0_w).xy();
+    let vec2: Vector2<f32> = (v2_w - v0_w).xy();
 
     let vec1_x_vec2 = vec1.perp(&vec2) as f32;
 
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..max_y {
-            let pv0 = Vector2::from(Point2::<i32>::new(x, y) - v0_s);
+            let pv0 = Vector2::from(Point2::<f32>::new(x as f32, y as f32) - v0_w.xy());
             let vec1_x_pv0 = vec1.perp(&pv0) as f32;
             let pv0_x_vec2 = pv0.perp(&vec2) as f32;
             // Barycentric coordinates
@@ -235,17 +233,6 @@ fn get_face_screen_coords(
         ((v2y + 1.) * half_screen_height) as i32,
     );
     [point0, point1, point2]
-}
-
-fn world_to_screen_coords(
-    world_coords: Point4<f32>,
-    half_screen_width: f32,
-    half_screen_height: f32,
-) -> Point2<i32> {
-    Point2::<i32>::new(
-        ((world_coords.x + 1.) * half_screen_width) as i32,
-        ((world_coords.y + 1.) * half_screen_height) as i32,
-    )
 }
 
 fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f32>; 3] {
@@ -331,37 +318,28 @@ fn get_viewport_matrix(screen_width: u32, screen_height: u32, depth: u32) -> Mat
 pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
-    let (half_screen_width, half_screen_height) = (
-        ((img.width() - 1) / 2) as f32,
-        ((img.height() - 1) / 2) as f32,
-    );
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
-    let camera = Point3::new(0., 0., 3.);
-    #[rustfmt::skip]
-    let persp = Matrix4::<f32>::new(1., 0. ,0., 0.,
-                                     0., 1., 0., 0.,
-                                     0., 0., 1., 0.,
-                                     0., 0., -1./camera.z, 1.);
+    let camera = Point3::new(1., 1., 3.);
+    let model_pos = Point3::new(0., 0., 0.);
+
+    let model_view = get_model_view_matrix(camera, model_pos, Vector3::new(0., 1., 0.));
+    let viewport = get_viewport_matrix(img.height(), img.width(), 255);
+    let projection = get_projection_matrix(camera, model_pos);
 
     for face in faces.chunks(3) {
         let mut world_coords = get_face_world_coords(&model, face);
         for coord in world_coords.iter_mut() {
             // println!("Pre {}", coord);
-            *coord = Point4::from(persp * coord.coords);
+            *coord = Point4::from(projection * model_view * coord.coords);
             *coord /= coord.w;
             // println!("Post {}", coord);
             coord.x = clamp(coord.x, -1.0, 1.0);
             coord.y = clamp(coord.y, -1.0, 1.0);
             coord.z = clamp(coord.z, -1.0, 1.0);
+            *coord = Point4::from(viewport * coord.coords);
         }
-        let screen_coords: [Point2<i32>; 3] = world_coords
-            .iter()
-            .map(|coord| world_to_screen_coords(*coord, half_screen_width, half_screen_height))
-            .collect::<Vec<Point2<i32>>>()
-            .try_into()
-            .unwrap();
         let texture_coords = get_face_texture_coords(
             &model,
             face,
@@ -373,7 +351,6 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
         let light = Vector3::new(0., 0., 1.);
         // Draw face
         draw_face_barycentric(
-            &screen_coords,
             &world_coords,
             &texture_coords,
             &texture,
