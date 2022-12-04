@@ -3,7 +3,7 @@
 use std::convert::TryInto;
 
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, Vector2, Vector3};
+use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, RowVector4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
 /// Implementation of the Bresenham's line algorithm
@@ -281,6 +281,50 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
     let normal1 = Vector3::<f32>::new(v1x, v1y, v1z);
     let normal2 = Vector3::<f32>::new(v2x, v2y, v2z);
     [normal0, normal1, normal2]
+}
+
+fn get_model_view_matrix(
+    eye_pos: Point3<f32>,
+    model_pos: Point3<f32>,
+    up_vector: Vector3<f32>,
+) -> Matrix4<f32> {
+    let new_z = (eye_pos - model_pos).normalize();
+    let new_x = up_vector.cross(&new_z).normalize();
+    let new_y = new_z.cross(&new_x).normalize();
+
+    let mut model_mat = Matrix4::identity();
+    let model_vec = -1. * model_pos - Point3::origin();
+    model_mat.set_column(3, &model_vec.insert_row(3, 1.));
+
+    let view_mat = Matrix4::from_rows(&[
+        new_x.transpose().insert_column(3, 0.),
+        new_y.transpose().insert_column(3, 0.),
+        new_z.transpose().insert_column(3, 0.),
+        RowVector4::new(0., 0., 0., 1.),
+    ]);
+
+    view_mat * model_mat
+}
+
+fn get_projection_matrix(eye_pos: Point3<f32>, model_pos: Point3<f32>) -> Matrix4<f32> {
+    Matrix4::<f32>::from_rows(&[
+        RowVector4::new(1., 0., 0., 0.),
+        RowVector4::new(0., 1., 0., 0.),
+        RowVector4::new(0., 0., 1., 0.),
+        RowVector4::new(0., 0., -1. / (eye_pos - model_pos).norm(), 1.),
+    ])
+}
+
+fn get_viewport_matrix(screen_width: u32, screen_height: u32, depth: u32) -> Matrix4<f32> {
+    let half_w = ((screen_width - 1) / 2) as f32;
+    let half_h = ((screen_height - 1) / 2) as f32;
+    let half_d = ((depth - 1) / 2) as f32;
+    Matrix4::<f32>::from_rows(&[
+        RowVector4::new(half_w, 0., 0., half_w),
+        RowVector4::new(0., half_h, 0., half_h),
+        RowVector4::new(0., 0., half_d, half_d),
+        RowVector4::new(0., 0., 0., 1.),
+    ])
 }
 
 /// Draw triangle faces of given 3D object
