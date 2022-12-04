@@ -211,30 +211,6 @@ fn draw_face_barycentric(
     }
 }
 
-fn get_face_screen_coords(
-    model: &Obj<TexturedVertex>,
-    face: &[u16],
-    half_screen_width: f32,
-    half_screen_height: f32,
-) -> [Point2<i32>; 3] {
-    let [v0x, v0y, _] = model.vertices[face[0] as usize].position;
-    let [v1x, v1y, _] = model.vertices[face[1] as usize].position;
-    let [v2x, v2y, _] = model.vertices[face[2] as usize].position;
-    let point0 = Point2::<i32>::new(
-        ((v0x + 1.) * half_screen_width) as i32,
-        ((v0y + 1.) * half_screen_height) as i32,
-    );
-    let point1 = Point2::<i32>::new(
-        ((v1x + 1.) * half_screen_width) as i32,
-        ((v1y + 1.) * half_screen_height) as i32,
-    );
-    let point2 = Point2::<i32>::new(
-        ((v2x + 1.) * half_screen_width) as i32,
-        ((v2y + 1.) * half_screen_height) as i32,
-    );
-    [point0, point1, point2]
-}
-
 fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f32>; 3] {
     let [v0x, v0y, v0z] = model.vertices[face[0] as usize].position;
     let [v1x, v1y, v1z] = model.vertices[face[1] as usize].position;
