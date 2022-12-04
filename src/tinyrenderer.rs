@@ -254,7 +254,7 @@ fn get_model_view_matrix(
     let new_y = new_z.cross(&new_x).normalize();
 
     let mut model_mat = Matrix4::identity();
-    let model_vec = -1. * model_pos - Point3::origin();
+    let model_vec = model_pos - Point3::origin();
     model_mat.set_column(3, &model_vec.insert_row(3, 1.));
 
     let view_mat = Matrix4::from_rows(&[
