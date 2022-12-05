@@ -247,13 +247,14 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
 fn get_model_view_matrix(
     eye_pos: Point3<f32>,
     model_pos: Point3<f32>,
+    model_scale: Vector3<f32>,
     up_vector: Vector3<f32>,
 ) -> Matrix4<f32> {
     let new_z = (eye_pos - model_pos).normalize();
     let new_x = up_vector.cross(&new_z).normalize();
     let new_y = new_z.cross(&new_x).normalize();
 
-    let mut model_mat = Matrix4::identity();
+    let mut model_mat = Matrix4::from_diagonal(&model_scale.insert_row(3, 1.));
     let model_vec = model_pos - Point3::origin();
     model_mat.set_column(3, &model_vec.insert_row(3, 1.));
 
@@ -297,13 +298,15 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let (width, height) = (img.width() as f32, img.height() as f32);
 
     // Camera configuration
-    let camera = Point3::new(0., 0., 3.);
+    let camera = Point3::new(1., 1., 3.);
 
     // Model configuration
     let model_pos = Point3::new(0., 0., 0.);
+    let model_scale = Vector3::new(0.5, 0.5, 0.5);
 
     // Transformation matrices
-    let model_view = get_model_view_matrix(camera, model_pos, Vector3::new(0., 1., 0.));
+    let model_view =
+        get_model_view_matrix(camera, model_pos, model_scale, Vector3::new(0., 1., 0.));
     let viewport = get_viewport_matrix(height, width, 255.);
     let projection = get_projection_matrix(camera, model_pos);
 
