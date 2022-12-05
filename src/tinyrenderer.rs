@@ -174,7 +174,6 @@ fn draw_face_barycentric(
     let min_x = f32::min(v0_w.x, f32::min(v1_w.x, v2_w.x)) as i32;
     let min_y = f32::min(v0_w.y, f32::min(v1_w.y, v2_w.y)) as i32;
 
-
     let vec1: Vector2<f32> = (v1_w - v0_w).xy();
     let vec2: Vector2<f32> = (v2_w - v0_w).xy();
 
@@ -277,11 +276,7 @@ fn get_projection_matrix(eye_pos: Point3<f32>, model_pos: Point3<f32>) -> Matrix
     ])
 }
 
-fn get_viewport_matrix(
-    screen_width: f32,
-    screen_height: f32,
-    depth: f32,
-) -> Matrix4<f32> {
+fn get_viewport_matrix(screen_width: f32, screen_height: f32, depth: f32) -> Matrix4<f32> {
     let half_w = (screen_width - 1.) / 2.;
     let half_h = (screen_height - 1.) / 2.;
     let half_d = (depth - 1.) / 2.;
@@ -298,24 +293,28 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
 
-    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
-
-    let camera = Point3::new(1., 1., 3.);
-    let model_pos = Point3::new(0., 0., 0.);
-
+    // Screen properties
     let (width, height) = (img.width() as f32, img.height() as f32);
 
+    // Camera configuration
+    let camera = Point3::new(0., 0., 3.);
+
+    // Model configuration
+    let model_pos = Point3::new(0., 0., 0.);
+
+    // Transformation matrices
     let model_view = get_model_view_matrix(camera, model_pos, Vector3::new(0., 1., 0.));
-    let viewport = get_viewport_matrix(height, width, 1024.);
+    let viewport = get_viewport_matrix(height, width, 255.);
     let projection = get_projection_matrix(camera, model_pos);
+
+    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
     for face in faces.chunks(3) {
         let mut world_coords = get_face_world_coords(&model, face);
         for coord in world_coords.iter_mut() {
-            // println!("Pre {}", coord);
             *coord = Point4::from(projection * model_view * coord.coords);
             *coord /= coord.w;
-            // println!("Post {}", coord);
+            // Clip out of frame points
             coord.x = clamp(coord.x, -1.0, 1.0);
             coord.y = clamp(coord.y, -1.0, 1.0);
             coord.z = clamp(coord.z, -1.0, 1.0);
