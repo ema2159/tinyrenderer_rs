@@ -159,8 +159,8 @@ fn get_model_view_matrix(
     let new_y = new_z.cross(&new_x).normalize();
 
     let mut model_mat = Matrix4::from_diagonal(&model_scale.insert_row(3, 1.));
-    let model_vec = model_pos - Point3::origin();
-    model_mat.set_column(3, &model_vec.insert_row(3, 1.));
+    let eye_vec = Point3::origin() - eye_pos;
+    model_mat.set_column(3, &(eye_vec.insert_row(3, 1.)));
 
     let view_mat = Matrix4::from_rows(&[
         new_x.transpose().insert_column(3, 0.),
@@ -207,7 +207,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
 
     // Model configuration
     let model_pos = Point3::new(0., 0., 0.);
-    let model_scale = Vector3::new(0.5, 0.5, 0.5);
+    let model_scale = Vector3::new(1., 1., 1.);
 
     // Transformation matrices
     let model_view =
