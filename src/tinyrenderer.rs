@@ -1,4 +1,7 @@
 #![allow(dead_code)]
+mod line;
+mod shaders;
+
 use self::line::draw_line;
 use image::{Pixel, Rgba, RgbaImage};
 use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, RowVector4, Vector2, Vector3};
@@ -247,6 +250,3 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
         );
     }
 }
-
-mod line;
-mod shaders;
