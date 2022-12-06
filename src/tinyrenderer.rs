@@ -1,9 +1,8 @@
 #![allow(dead_code)]
+use self::line::draw_line;
 use image::{Pixel, Rgba, RgbaImage};
 use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, RowVector4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
-use self::line::draw_line;
-
 
 fn draw_flat_triangle(
     edge: &Point2<i32>,
@@ -202,8 +201,9 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     // Screen properties
     let (width, height) = (img.width() as f32, img.height() as f32);
 
-    // Camera configuration
-    let camera = Point3::new(1., 1., 3.);
+    // Camera and light configuration
+    let camera = Point3::new(0., 0., 3.);
+    let light = Vector3::new(0., 0., 1.);
 
     // Model configuration
     let model_pos = Point3::new(0., 0., 0.);
@@ -235,7 +235,6 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
         );
         let normal_coords = get_face_normal_coords(&model, face);
 
-        let light = Vector3::new(0., 0., 1.);
         // Draw face
         draw_face_barycentric(
             &world_coords,
