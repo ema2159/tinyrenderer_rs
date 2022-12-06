@@ -225,7 +225,6 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
             // Clip out of frame points
             coord.x = clamp(coord.x, -1.0, 1.0);
             coord.y = clamp(coord.y, -1.0, 1.0);
-            coord.z = clamp(coord.z, -1.0, 1.0);
             *coord = Point4::from(viewport * coord.coords);
         }
         let texture_coords = get_face_texture_coords(
