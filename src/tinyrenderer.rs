@@ -248,5 +248,5 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     }
 }
 
-
 mod line;
+mod shaders;
