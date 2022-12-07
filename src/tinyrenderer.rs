@@ -62,7 +62,7 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
     draw_flat_triangle(&v0, &v1, &v3, color, img);
 }
 
-/// Implementation of barycentric algorithm for triangle filling
+/// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
     world_coords: &[Point4<f32>; 3],
     texture_coords: &[Point2<f32>; 3],
@@ -197,7 +197,12 @@ fn get_viewport_matrix(screen_width: f32, screen_height: f32, depth: f32) -> Mat
     ])
 }
 
-/// Draw triangle faces of given 3D object
+struct Camera {
+    position: Point3<f32>,
+    focal_length: f32,
+}
+
+/// Draw triangle faces of given 3D object. Works as the primitive processor.
 pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: RgbaImage) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
@@ -210,20 +215,23 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let model_scale = Vector3::new(1., 1., 1.);
 
     // Camera and light configuration
-    let camera = Point3::new(0.5, 0.5, 1.);
+    let camera = Camera {
+        position: Point3::new(0.5, 0.5, 1.),
+        focal_length: 1.,
+    };
     let view_point = model_pos;
     let light = Vector3::new(0., 0., 1.);
 
     // Transformation matrices
     let model_view = get_model_view_matrix(
-        camera,
+        camera.position,
         view_point,
         model_pos,
         model_scale,
         Vector3::new(0., 1., 0.),
     );
     let viewport = get_viewport_matrix(height, width, 1024.);
-    let projection = get_projection_matrix(1.);
+    let projection = get_projection_matrix(camera.focal_length);
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
