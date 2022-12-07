@@ -176,12 +176,12 @@ fn get_model_view_matrix(
     view_mat * model_mat
 }
 
-fn get_projection_matrix(eye_pos: Point3<f32>, model_pos: Point3<f32>) -> Matrix4<f32> {
+fn get_projection_matrix(f: f32) -> Matrix4<f32> {
     Matrix4::<f32>::from_rows(&[
         RowVector4::new(1., 0., 0., 0.),
         RowVector4::new(0., 1., 0., 0.),
         RowVector4::new(0., 0., 1., 0.),
-        RowVector4::new(0., 0., -1. / (eye_pos - model_pos).norm(), 1.),
+        RowVector4::new(0., 0., -1. / f, 1.),
     ])
 }
 
@@ -215,7 +215,6 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let light = Vector3::new(0., 0., 1.);
 
     // Transformation matrices
-    let projection = get_projection_matrix(camera, model_pos);
     let model_view = get_model_view_matrix(
         camera,
         view_point,
@@ -224,6 +223,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
         Vector3::new(0., 1., 0.),
     );
     let viewport = get_viewport_matrix(height, width, 1024.);
+    let projection = get_projection_matrix(1.);
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
