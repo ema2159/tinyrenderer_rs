@@ -1,7 +1,7 @@
-use nalgebra::{clamp, Matrix4, Point4, Vector3};
+use nalgebra::{clamp, Matrix4, Point3, Point4, Vector3};
 
 pub trait Shader {
-    fn vertex_shader(&self, vert: &mut Point4<f32>);
+    fn vertex_shader(&self, vert: &Point4<f32>) -> Point3<f32>;
     fn fragment_shader(&self);
 }
 
@@ -16,13 +16,15 @@ pub struct MyShader<'a> {
 }
 
 impl Shader for MyShader<'_> {
-    fn vertex_shader(&self, coord: &mut Point4<f32>) {
-        *coord = Point4::from(self.projection_matrix * self.model_view_matrix * coord.coords);
-        *coord /= coord.w;
+    fn vertex_shader(&self, coord: &Point4<f32>) -> Point3<f32> {
+        let mut screen_coord =
+            Point4::from(self.projection_matrix * self.model_view_matrix * coord.coords);
+        screen_coord /= screen_coord.w;
         // Clip out of frame points
-        coord.x = clamp(coord.x, -1.0, 1.0);
-        coord.y = clamp(coord.y, -1.0, 1.0);
-        *coord = Point4::from(self.viewport_matrix * coord.coords);
+        screen_coord.x = clamp(screen_coord.x, -1.0, 1.0);
+        screen_coord.y = clamp(screen_coord.y, -1.0, 1.0);
+        screen_coord = Point4::from(self.viewport_matrix * screen_coord.coords);
+        screen_coord.xyz()
     }
     fn fragment_shader(&self) {}
 }

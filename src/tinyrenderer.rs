@@ -8,7 +8,7 @@ use self::{
     shaders::{MyShader, Shader},
 };
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point4, Vector2, Vector3};
+use nalgebra::{Point2, Point3, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
 fn draw_flat_triangle(
@@ -68,14 +68,14 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 
 /// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
-    world_coords: &[Point4<f32>; 3],
+    screen_coords: &[Point3<f32>; 3],
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
     normal_coords: &[Vector3<f32>; 3],
     shaders: &mut MyShader,
     img: &mut RgbaImage,
 ) {
-    let [v0_w, v1_w, v2_w] = &world_coords;
+    let [v0_w, v1_w, v2_w] = &screen_coords;
     let [v0_t, v1_t, v2_t] = &texture_coords;
     let [v0_n, v1_n, v2_n] = &normal_coords;
     // Define triangle bounding box
@@ -166,8 +166,9 @@ pub fn draw_faces(
 
     for face in faces.chunks(3) {
         let mut world_coords = get_face_world_coords(&model, face);
-        for coord in world_coords.iter_mut() {
-            shaders.vertex_shader(coord);
+        let mut screen_coords = [Point3::<f32>::origin(); 3];
+        for (i, coord) in world_coords.iter_mut().enumerate() {
+            screen_coords[i] = shaders.vertex_shader(coord);
         }
         let texture_coords = get_face_texture_coords(
             &model,
@@ -179,7 +180,7 @@ pub fn draw_faces(
 
         // Draw face
         draw_face_barycentric(
-            &world_coords,
+            &screen_coords,
             &texture_coords,
             &texture,
             &normal_coords,
