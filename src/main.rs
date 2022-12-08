@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
     // Shaders
-    let mut my_shader = MyShader {
+    let my_shader = MyShader {
         model_view_matrix: get_model_view_matrix(
             camera.position,
             camera.view_point,
@@ -71,13 +71,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         projection_matrix: get_projection_matrix(camera.focal_length),
         viewport_matrix: get_viewport_matrix(height, width, 1024.),
         light,
-        z_buffer: &mut z_buffer,
         varying_intensity: 0.,
     };
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(model, &mut img, texture, &mut my_shader);
+    draw_faces(model, &mut img, &mut z_buffer, texture, &my_shader);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 

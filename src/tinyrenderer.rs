@@ -72,8 +72,9 @@ fn draw_face_barycentric(
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
     normal_coords: &[Vector3<f32>; 3],
-    shaders: &mut MyShader,
+    shaders: &MyShader,
     img: &mut RgbaImage,
+    z_buffer: &mut Vec<Vec<f32>>,
 ) {
     let [v0_w, v1_w, v2_w] = &screen_coords;
     let [v0_t, v1_t, v2_t] = &texture_coords;
@@ -104,8 +105,8 @@ fn draw_face_barycentric(
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
                 let normal = t_s_1 * v0_n + t * v1_n + s * v2_n;
                 let light_intensity = normal.dot(&shaders.light);
-                if shaders.z_buffer[x as usize][y as usize] < z_value {
-                    shaders.z_buffer[x as usize][y as usize] = z_value;
+                if z_buffer[x as usize][y as usize] < z_value {
+                    z_buffer[x as usize][y as usize] = z_value;
                     let tex_x_value = t_s_1 * v0_t.x + t * v1_t.x + s * v2_t.x;
                     let tex_y_value = t_s_1 * v0_t.y + t * v1_t.y + s * v2_t.y;
                     let mut tex_point = texture
@@ -158,8 +159,9 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
 pub fn draw_faces(
     model: Obj<TexturedVertex>,
     img: &mut RgbaImage,
+    z_buffer: &mut Vec<Vec<f32>>,
     texture: RgbaImage,
-    shaders: &mut MyShader,
+    shaders: &MyShader,
 ) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
@@ -184,8 +186,9 @@ pub fn draw_faces(
             &texture_coords,
             &texture,
             &normal_coords,
-            shaders,
+            &shaders,
             img,
+            z_buffer,
         );
     }
 }

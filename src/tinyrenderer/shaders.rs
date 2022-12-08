@@ -5,17 +5,16 @@ pub trait Shader {
     fn fragment_shader(&self);
 }
 
-pub struct MyShader<'a> {
+pub struct MyShader {
     pub model_view_matrix: Matrix4<f32>,
     pub projection_matrix: Matrix4<f32>,
     pub viewport_matrix: Matrix4<f32>,
     pub light: Vector3<f32>,
-    pub z_buffer: &'a mut Vec<Vec<f32>>,
 
     pub varying_intensity: f32,
 }
 
-impl Shader for MyShader<'_> {
+impl Shader for MyShader {
     fn vertex_shader(&self, coord: &Point4<f32>) -> Point3<f32> {
         let mut screen_coord =
             Point4::from(self.projection_matrix * self.model_view_matrix * coord.coords);
