@@ -1,11 +1,12 @@
 extern crate image;
+extern crate nalgebra;
 extern crate obj;
 extern crate piston_window;
-extern crate nalgebra;
 
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
+use nalgebra::{Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
@@ -13,6 +14,10 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use tinyrenderer::draw_faces;
+use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
+use tinyrenderer::shaders::MyShader;
+
+use crate::tinyrenderer::gl::Camera;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
@@ -34,17 +39,51 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
-
     image::imageops::flip_vertical_in_place(&mut texture);
+
+    // Screen properties
+    let (width, height) = (img.width() as f32, img.height() as f32);
+
+    // Model configuration
+    let model_pos = Point3::new(0., 0., 0.);
+    let model_scale = Vector3::new(1., 1., 1.);
+
+    // Camera and light configuration
+    let camera = Camera {
+        position: Point3::new(0.5, 0.5, 1.),
+        focal_length: 1.,
+        view_point: model_pos,
+    };
+    let light = Vector3::new(0., 0., 1.);
+
+    // Z buffer
+    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
+
+    // Shaders
+    let mut my_shader = MyShader {
+        model_view_matrix: get_model_view_matrix(
+            camera.position,
+            camera.view_point,
+            model_pos,
+            model_scale,
+            Vector3::new(0., 1., 0.),
+        ),
+        projection_matrix: get_projection_matrix(camera.focal_length),
+        viewport_matrix: get_viewport_matrix(height, width, 1024.),
+        light,
+        z_buffer: &mut z_buffer,
+        varying_intensity: 0.,
+    };
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(model, &mut img, texture);
+    draw_faces(model, &mut img, texture, &mut my_shader);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
     image::imageops::flip_vertical_in_place(&mut img);
 
+    // Rendering window
     let mut window: piston_window::PistonWindow =
         piston_window::WindowSettings::new("tinyrenderer_rs", [WIDTH, HEIGHT])
             .exit_on_esc(true)

@@ -1,10 +1,14 @@
 #![allow(dead_code)]
+pub mod gl;
 mod line;
-mod shaders;
+pub mod shaders;
 
-use self::line::draw_line;
+use self::{
+    line::draw_line,
+    shaders::{MyShader, Shader},
+};
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{clamp, Matrix4, Point2, Point3, Point4, RowVector4, Vector2, Vector3};
+use nalgebra::{Point2, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
 fn draw_flat_triangle(
@@ -68,8 +72,7 @@ fn draw_face_barycentric(
     texture_coords: &[Point2<f32>; 3],
     texture: &RgbaImage,
     normal_coords: &[Vector3<f32>; 3],
-    light: Vector3<f32>,
-    z_buffer: &mut Vec<Vec<f32>>,
+    shaders: &mut MyShader,
     img: &mut RgbaImage,
 ) {
     let [v0_w, v1_w, v2_w] = &world_coords;
@@ -100,9 +103,9 @@ fn draw_face_barycentric(
             if s >= 0. && t >= 0. && t_s_1 >= 0. {
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
                 let normal = t_s_1 * v0_n + t * v1_n + s * v2_n;
-                let light_intensity = normal.dot(&light);
-                if z_buffer[x as usize][y as usize] < z_value {
-                    z_buffer[x as usize][y as usize] = z_value;
+                let light_intensity = normal.dot(&shaders.light);
+                if shaders.z_buffer[x as usize][y as usize] < z_value {
+                    shaders.z_buffer[x as usize][y as usize] = z_value;
                     let tex_x_value = t_s_1 * v0_t.x + t * v1_t.x + s * v2_t.x;
                     let tex_y_value = t_s_1 * v0_t.y + t * v1_t.y + s * v2_t.y;
                     let mut tex_point = texture
@@ -151,99 +154,20 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
     [normal0, normal1, normal2]
 }
 
-fn get_model_view_matrix(
-    eye_pos: Point3<f32>,
-    view_point: Point3<f32>,
-    model_pos: Point3<f32>,
-    model_scale: Vector3<f32>,
-    up_vector: Vector3<f32>,
-) -> Matrix4<f32> {
-    let new_z = (eye_pos - view_point).normalize();
-    let new_x = up_vector.cross(&new_z).normalize();
-    let new_y = new_z.cross(&new_x).normalize();
-
-    let mut model_mat = Matrix4::from_diagonal(&model_scale.insert_row(3, 1.));
-    let eye_vec = model_pos - eye_pos;
-    model_mat.set_column(3, &(eye_vec.insert_row(3, 1.)));
-
-    let view_mat = Matrix4::from_rows(&[
-        new_x.transpose().insert_column(3, 0.),
-        new_y.transpose().insert_column(3, 0.),
-        new_z.transpose().insert_column(3, 0.),
-        RowVector4::new(0., 0., 0., 1.),
-    ]);
-
-    view_mat * model_mat
-}
-
-fn get_projection_matrix(f: f32) -> Matrix4<f32> {
-    Matrix4::<f32>::from_rows(&[
-        RowVector4::new(1., 0., 0., 0.),
-        RowVector4::new(0., 1., 0., 0.),
-        RowVector4::new(0., 0., 1., 0.),
-        RowVector4::new(0., 0., -1. / f, 1.),
-    ])
-}
-
-fn get_viewport_matrix(screen_width: f32, screen_height: f32, depth: f32) -> Matrix4<f32> {
-    let half_w = (screen_width - 1.) / 2.;
-    let half_h = (screen_height - 1.) / 2.;
-    let half_d = (depth - 1.) / 2.;
-    Matrix4::<f32>::from_rows(&[
-        RowVector4::new(half_w, 0., 0., half_w),
-        RowVector4::new(0., half_h, 0., half_h),
-        RowVector4::new(0., 0., half_d, half_d),
-        RowVector4::new(0., 0., 0., 1.),
-    ])
-}
-
-struct Camera {
-    position: Point3<f32>,
-    focal_length: f32,
-}
-
 /// Draw triangle faces of given 3D object. Works as the primitive processor.
-pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: RgbaImage) {
+pub fn draw_faces(
+    model: Obj<TexturedVertex>,
+    img: &mut RgbaImage,
+    texture: RgbaImage,
+    shaders: &mut MyShader,
+) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
-
-    // Screen properties
-    let (width, height) = (img.width() as f32, img.height() as f32);
-
-    // Model configuration
-    let model_pos = Point3::new(0., 0., 0.);
-    let model_scale = Vector3::new(1., 1., 1.);
-
-    // Camera and light configuration
-    let camera = Camera {
-        position: Point3::new(0.5, 0.5, 1.),
-        focal_length: 1.,
-    };
-    let view_point = model_pos;
-    let light = Vector3::new(0., 0., 1.);
-
-    // Transformation matrices
-    let model_view = get_model_view_matrix(
-        camera.position,
-        view_point,
-        model_pos,
-        model_scale,
-        Vector3::new(0., 1., 0.),
-    );
-    let viewport = get_viewport_matrix(height, width, 1024.);
-    let projection = get_projection_matrix(camera.focal_length);
-
-    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
     for face in faces.chunks(3) {
         let mut world_coords = get_face_world_coords(&model, face);
         for coord in world_coords.iter_mut() {
-            *coord = Point4::from(projection * model_view * coord.coords);
-            *coord /= coord.w;
-            // Clip out of frame points
-            coord.x = clamp(coord.x, -1.0, 1.0);
-            coord.y = clamp(coord.y, -1.0, 1.0);
-            *coord = Point4::from(viewport * coord.coords);
+            shaders.vertex_shader(coord);
         }
         let texture_coords = get_face_texture_coords(
             &model,
@@ -259,8 +183,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
             &texture_coords,
             &texture,
             &normal_coords,
-            light,
-            &mut z_buffer,
+            shaders,
             img,
         );
     }
