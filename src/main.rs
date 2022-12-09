@@ -17,10 +17,15 @@ use tinyrenderer::draw_faces;
 use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
 use tinyrenderer::shaders::MyShader;
 
-use crate::tinyrenderer::gl::Camera;
-
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
+
+
+pub struct Camera {
+    pub position: Point3<f32>,
+    pub focal_length: f32,
+    pub view_point: Point3<f32>,
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
@@ -48,12 +53,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model_pos = Point3::new(0., 0., 0.);
     let model_scale = Vector3::new(1., 1., 1.);
 
-    // Camera and light configuration
+    // Camera configuration
     let camera = Camera {
         position: Point3::new(0.5, 0.5, 1.),
         focal_length: 1.,
         view_point: model_pos,
     };
+    // Light configuration
     let light = Vector3::new(0., 0., 1.);
 
     // Z buffer

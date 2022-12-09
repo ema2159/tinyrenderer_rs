@@ -45,9 +45,3 @@ pub fn get_viewport_matrix(screen_width: f32, screen_height: f32, depth: f32) ->
         RowVector4::new(0., 0., 0., 1.),
     ])
 }
-
-pub struct Camera {
-    pub position: Point3<f32>,
-    pub focal_length: f32,
-    pub view_point: Point3<f32>,
-}
