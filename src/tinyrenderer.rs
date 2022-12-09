@@ -13,7 +13,7 @@ fn draw_flat_triangle(
     base_l: &Point2<i32>,
     base_r: &Point2<i32>,
     color: Rgba<u8>,
-    img: &mut RgbaImage,
+    color_buffer: &mut RgbaImage,
 ) {
     let invslope20: f32 = (base_l.x - edge.x) as f32 / (base_l.y - edge.y) as f32;
     let invslope21: f32 = (base_r.x - edge.x) as f32 / (base_r.y - edge.y) as f32;
@@ -26,7 +26,7 @@ fn draw_flat_triangle(
                 &Point2::<i32>::new(x0 as i32, y),
                 &Point2::<i32>::new(x1 as i32, y),
                 color,
-                img,
+                color_buffer,
             );
             x1 += invslope20;
             x0 += invslope21;
@@ -37,7 +37,7 @@ fn draw_flat_triangle(
                 &Point2::<i32>::new(x0 as i32, y),
                 &Point2::<i32>::new(x1 as i32, y),
                 color,
-                img,
+                color_buffer,
             );
             x1 -= invslope20;
             x0 -= invslope21;
@@ -46,7 +46,7 @@ fn draw_flat_triangle(
 }
 
 /// Implementation of line sweeping algorithm for triangle filling
-fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, img: &mut RgbaImage) {
+fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, color_buffer: &mut RgbaImage) {
     let v0 = &screen_coords[0];
     let v1 = &screen_coords[1];
     let v2 = &screen_coords[2];
@@ -59,15 +59,15 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
     // v3 corresponds to the point that is at the same height as the second-most vertex height-wise
     // that is at the edge of the triangle that is opposite of such a vertex
     let v3 = Point2::<i32>::new(v3_x, v3_y);
-    draw_flat_triangle(&v2, &v1, &v3, color, img);
-    draw_flat_triangle(&v0, &v1, &v3, color, img);
+    draw_flat_triangle(&v2, &v1, &v3, color, color_buffer);
+    draw_flat_triangle(&v0, &v1, &v3, color, color_buffer);
 }
 
 /// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
     screen_coords: [Point4<f32>; 3],
     shaders: &dyn Shader,
-    img: &mut RgbaImage,
+    color_buffer: &mut RgbaImage,
     z_buffer: &mut Vec<Vec<f32>>,
 ) {
     let [v0_w, v1_w, v2_w] = screen_coords;
@@ -99,7 +99,7 @@ fn draw_face_barycentric(
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
                     if let Some(frag) = shaders.fragment_shader(bar_coords) {
-                        img.put_pixel(x as u32, y as u32, frag);
+                        color_buffer.put_pixel(x as u32, y as u32, frag);
                     }
                 }
             }
@@ -145,7 +145,7 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
 /// Draw triangle faces of given 3D object. Works as the primitive processor.
 pub fn draw_faces(
     model: &Obj<TexturedVertex>,
-    img: &mut RgbaImage,
+    color_buffer: &mut RgbaImage,
     z_buffer: &mut Vec<Vec<f32>>,
     shaders: &mut dyn Shader,
 ) {
@@ -159,6 +159,6 @@ pub fn draw_faces(
         }
 
         // Draw face
-        draw_face_barycentric(verts, shaders, img, z_buffer);
+        draw_face_barycentric(verts, shaders, color_buffer, z_buffer);
     }
 }

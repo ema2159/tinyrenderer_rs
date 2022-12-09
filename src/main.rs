@@ -27,7 +27,7 @@ pub struct Camera {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
+    let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     // Object and texture
     let obj_path =
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Screen properties
-    let (width, height) = (img.width() as f32, img.height() as f32);
+    let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
 
     // Model configuration
     let model_pos = Point3::new(0., 0., 0.);
@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let light = Vector3::new(0., 0., 1.);
 
     // Z buffer
-    let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
+    let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
     // Shaders
     let mut my_shader = MyShader {
@@ -85,11 +85,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(&model, &mut img, &mut z_buffer, &mut my_shader);
+    draw_faces(&model, &mut color_buffer, &mut z_buffer, &mut my_shader);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
-    image::imageops::flip_vertical_in_place(&mut img);
+    image::imageops::flip_vertical_in_place(&mut color_buffer);
 
     // Rendering window
     let mut window: piston_window::PistonWindow =
@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let rendered_img = piston_window::Texture::from_image(
         &mut window.create_texture_context(),
-        &img,
+        &color_buffer,
         &piston_window::TextureSettings::new(),
     )
     .unwrap();
