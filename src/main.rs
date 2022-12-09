@@ -59,6 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         focal_length: 1.,
         view_point: model_pos,
     };
+
     // Light configuration
     let light = Vector3::new(0., 0., 1.);
 
@@ -67,16 +68,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Shaders
     let my_shader = MyShader {
-        model_view_matrix: get_model_view_matrix(
+        uniform_model_view_mat: get_model_view_matrix(
             camera.position,
             camera.view_point,
             model_pos,
             model_scale,
             Vector3::new(0., 1., 0.),
         ),
-        projection_matrix: get_projection_matrix(camera.focal_length),
-        viewport_matrix: get_viewport_matrix(height, width, 1024.),
-        light,
+        uniform_projection_mat: get_projection_matrix(camera.focal_length),
+        uniform_viewport_mat: get_viewport_matrix(height, width, 1024.),
+        uniform_light: light,
         varying_intensity: 0.,
     };
 

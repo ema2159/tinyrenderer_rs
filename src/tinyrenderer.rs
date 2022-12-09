@@ -104,7 +104,7 @@ fn draw_face_barycentric(
             if s >= 0. && t >= 0. && t_s_1 >= 0. {
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
                 let normal = t_s_1 * v0_n + t * v1_n + s * v2_n;
-                let light_intensity = normal.dot(&shaders.light);
+                let light_intensity = normal.dot(&shaders.uniform_light);
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
                     let tex_x_value = t_s_1 * v0_t.x + t * v1_t.x + s * v2_t.x;
