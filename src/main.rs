@@ -6,7 +6,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Matrix2x3, Point2, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
@@ -19,7 +19,6 @@ use tinyrenderer::shaders::MyShader;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
-
 
 pub struct Camera {
     pub position: Point3<f32>,
@@ -67,7 +66,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
     // Shaders
-    let my_shader = MyShader {
+    let mut my_shader = MyShader {
+        model: &model,
         uniform_model_view_mat: get_model_view_matrix(
             camera.position,
             camera.view_point,
@@ -78,12 +78,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_projection_mat: get_projection_matrix(camera.focal_length),
         uniform_viewport_mat: get_viewport_matrix(height, width, 1024.),
         uniform_light: light,
-        varying_intensity: 0.,
+        uniform_texture: texture,
+        varying_uv: Matrix2x3::<f32>::zeros(),
+        varying_intensity: [Point2::<f32>::origin(); 3],
     };
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(model, &mut img, &mut z_buffer, texture, &my_shader);
+    draw_faces(&model, &mut img, &mut z_buffer, &mut my_shader);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 

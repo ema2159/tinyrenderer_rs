@@ -3,12 +3,9 @@ pub mod gl;
 mod line;
 pub mod shaders;
 
-use self::{
-    line::draw_line,
-    shaders::{MyShader, Shader},
-};
-use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point3, Point4, Vector2, Vector3};
+use self::{line::draw_line, shaders::Shader};
+use image::{Rgba, RgbaImage};
+use nalgebra::{Point2, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
 fn draw_flat_triangle(
@@ -68,17 +65,12 @@ fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, im
 
 /// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
-    screen_coords: &[Point3<f32>; 3],
-    texture_coords: &[Point2<f32>; 3],
-    texture: &RgbaImage,
-    normal_coords: &[Vector3<f32>; 3],
-    shaders: &MyShader,
+    screen_coords: [Point4<f32>; 3],
+    shaders: &dyn Shader,
     img: &mut RgbaImage,
     z_buffer: &mut Vec<Vec<f32>>,
 ) {
-    let [v0_w, v1_w, v2_w] = &screen_coords;
-    let [v0_t, v1_t, v2_t] = &texture_coords;
-    let [v0_n, v1_n, v2_n] = &normal_coords;
+    let [v0_w, v1_w, v2_w] = screen_coords;
     // Define triangle bounding box
     let max_x = f32::max(v0_w.x, f32::max(v1_w.x, v2_w.x)) as i32;
     let max_y = f32::max(v0_w.y, f32::max(v1_w.y, v2_w.y)) as i32;
@@ -100,20 +92,15 @@ fn draw_face_barycentric(
             let s = vec1_x_pv0 / vec1_x_vec2;
             let t = pv0_x_vec2 / vec1_x_vec2;
             let t_s_1 = 1. - (t + s);
+            let bar_coords = Vector3::<f32>::new(t_s_1, t, s);
 
             if s >= 0. && t >= 0. && t_s_1 >= 0. {
                 let z_value = t_s_1 * v0_w.z + t * v1_w.z + s * v2_w.z;
-                let normal = t_s_1 * v0_n + t * v1_n + s * v2_n;
-                let light_intensity = normal.dot(&shaders.uniform_light);
                 if z_buffer[x as usize][y as usize] < z_value {
                     z_buffer[x as usize][y as usize] = z_value;
-                    let tex_x_value = t_s_1 * v0_t.x + t * v1_t.x + s * v2_t.x;
-                    let tex_y_value = t_s_1 * v0_t.y + t * v1_t.y + s * v2_t.y;
-                    let mut tex_point = texture
-                        .get_pixel(tex_x_value as u32, tex_y_value as u32)
-                        .to_rgba();
-                    tex_point.apply_without_alpha(|ch| ((ch as f32) * light_intensity) as u8);
-                    img.put_pixel(x as u32, y as u32, tex_point);
+                    if let Some(frag) = shaders.fragment_shader(bar_coords) {
+                        img.put_pixel(x as u32, y as u32, frag);
+                    }
                 }
             }
         }
@@ -157,38 +144,21 @@ fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3
 
 /// Draw triangle faces of given 3D object. Works as the primitive processor.
 pub fn draw_faces(
-    model: Obj<TexturedVertex>,
+    model: &Obj<TexturedVertex>,
     img: &mut RgbaImage,
     z_buffer: &mut Vec<Vec<f32>>,
-    texture: RgbaImage,
-    shaders: &MyShader,
+    shaders: &mut dyn Shader,
 ) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
 
     for face in faces.chunks(3) {
-        let mut world_coords = get_face_world_coords(&model, face);
-        let mut screen_coords = [Point3::<f32>::origin(); 3];
-        for (i, coord) in world_coords.iter_mut().enumerate() {
-            screen_coords[i] = shaders.vertex_shader(coord);
+        let mut verts = get_face_world_coords(&model, face);
+        for (i, vert) in verts.iter_mut().enumerate() {
+            shaders.vertex_shader(face[i], i, vert);
         }
-        let texture_coords = get_face_texture_coords(
-            &model,
-            face,
-            texture.width() as f32,
-            texture.height() as f32,
-        );
-        let normal_coords = get_face_normal_coords(&model, face);
 
         // Draw face
-        draw_face_barycentric(
-            &screen_coords,
-            &texture_coords,
-            &texture,
-            &normal_coords,
-            &shaders,
-            img,
-            z_buffer,
-        );
+        draw_face_barycentric(verts, shaders, img, z_buffer);
     }
 }
