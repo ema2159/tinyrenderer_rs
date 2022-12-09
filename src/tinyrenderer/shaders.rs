@@ -1,5 +1,5 @@
-use image::{Rgba, RgbaImage};
-use nalgebra::{clamp, Matrix2x3, Matrix4, Point2, Point4, Vector2, Vector3};
+use image::{Pixel, Rgba, RgbaImage};
+use nalgebra::{clamp, Matrix2x3, Matrix3, Matrix4, Point2, Point4, Vector2, Vector3, Vector4};
 use obj::{Obj, TexturedVertex};
 
 pub trait Shader {
@@ -10,13 +10,14 @@ pub trait Shader {
 pub struct MyShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
     pub uniform_model_view_mat: Matrix4<f32>,
+    pub uniform_model_view_it: Matrix4<f32>,
     pub uniform_projection_mat: Matrix4<f32>,
     pub uniform_viewport_mat: Matrix4<f32>,
     pub uniform_light: Vector3<f32>,
     pub uniform_texture: RgbaImage,
 
     pub varying_uv: Matrix2x3<f32>,
-    pub varying_intensity: [Point2<f32>; 3],
+    pub varying_normals: Matrix3<f32>,
 }
 
 fn sample_2d(texture: &RgbaImage, uv: Point2<f32>) -> Rgba<u8> {
@@ -31,6 +32,10 @@ impl Shader for MyShader<'_> {
         let [u, v, _] = self.model.vertices[face_idx as usize].texture;
         self.varying_uv.set_column(nthvert, &Vector2::new(u, v));
 
+        let [i, j, k] = self.model.vertices[face_idx as usize].normal;
+        let normal = self.uniform_model_view_it * Vector4::new(i, j, k, 1.);
+        self.varying_normals.set_column(nthvert, &normal.xyz());
+
         *gl_position = Point4::from(
             self.uniform_projection_mat * self.uniform_model_view_mat * gl_position.coords,
         );
@@ -42,8 +47,10 @@ impl Shader for MyShader<'_> {
     }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         let uv = Point2::<f32>::from(self.varying_uv * bar_coords);
-        let gl_frag_color = sample_2d(&self.uniform_texture, uv);
-        // tex_point.apply_without_alpha(|ch| ((ch as f32) * light_intensity) as u8);
+        let normal = (self.varying_normals * bar_coords).normalize();
+        let intensity = self.uniform_light.dot(&normal);
+        let mut gl_frag_color = sample_2d(&self.uniform_texture, uv);
+        gl_frag_color.apply_without_alpha(|ch| ((ch as f32) * intensity) as u8);
         Some(gl_frag_color)
     }
 }

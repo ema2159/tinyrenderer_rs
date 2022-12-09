@@ -8,7 +8,6 @@ use image::RgbaImage;
 use nalgebra::{Point2, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
-
 /// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
     screen_coords: [Point4<f32>; 3],

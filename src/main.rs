@@ -6,7 +6,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use nalgebra::{Matrix2x3, Point2, Point3, Vector3};
+use nalgebra::{Matrix2x3, Matrix3, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
 
-    // Screen properties
+    // Frame properties
     let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
 
     // Model configuration
@@ -65,22 +65,29 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
+    // Transformation matrices
+    let model_view = get_model_view_matrix(
+        camera.position,
+        camera.view_point,
+        model_pos,
+        model_scale,
+        Vector3::new(0., 1., 0.),
+    );
+    let model_view_it = model_view.clone().try_inverse().unwrap().transpose();
+    let projection = get_projection_matrix(camera.focal_length);
+    let viewport = get_viewport_matrix(height, width, 1024.);
+
     // Shaders
     let mut my_shader = MyShader {
         model: &model,
-        uniform_model_view_mat: get_model_view_matrix(
-            camera.position,
-            camera.view_point,
-            model_pos,
-            model_scale,
-            Vector3::new(0., 1., 0.),
-        ),
-        uniform_projection_mat: get_projection_matrix(camera.focal_length),
-        uniform_viewport_mat: get_viewport_matrix(height, width, 1024.),
-        uniform_light: light,
+        uniform_model_view_mat: model_view,
+        uniform_model_view_it: model_view_it,
+        uniform_projection_mat: projection,
+        uniform_viewport_mat: viewport,
+        uniform_light: (model_view * light.insert_row(3, 0.)).normalize().xyz(),
         uniform_texture: texture,
         varying_uv: Matrix2x3::<f32>::zeros(),
-        varying_intensity: [Point2::<f32>::origin(); 3],
+        varying_normals: Matrix3::<f32>::zeros(),
     };
 
     use std::time::Instant;
