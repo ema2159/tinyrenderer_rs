@@ -9,10 +9,10 @@ pub trait Shader {
 
 pub struct MyShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
-    pub uniform_model_view_mat: Matrix4<f32>,
+    pub uniform_model_view: Matrix4<f32>,
     pub uniform_model_view_it: Matrix4<f32>,
-    pub uniform_projection_mat: Matrix4<f32>,
-    pub uniform_viewport_mat: Matrix4<f32>,
+    pub uniform_projection: Matrix4<f32>,
+    pub uniform_viewport: Matrix4<f32>,
     pub uniform_light: Vector3<f32>,
     pub uniform_texture: RgbaImage,
 
@@ -36,14 +36,13 @@ impl Shader for MyShader<'_> {
         let normal = self.uniform_model_view_it * Vector4::new(i, j, k, 1.);
         self.varying_normals.set_column(nthvert, &normal.xyz());
 
-        *gl_position = Point4::from(
-            self.uniform_projection_mat * self.uniform_model_view_mat * gl_position.coords,
-        );
+        *gl_position =
+            Point4::from(self.uniform_projection * self.uniform_model_view * gl_position.coords);
         *gl_position /= gl_position.w;
         // Clip out of frame points
         gl_position.x = clamp(gl_position.x, -1.0, 1.0);
         gl_position.y = clamp(gl_position.y, -1.0, 1.0);
-        *gl_position = Point4::from(self.uniform_viewport_mat * gl_position.coords);
+        *gl_position = Point4::from(self.uniform_viewport * gl_position.coords);
     }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         let uv = Point2::<f32>::from(self.varying_uv * bar_coords);

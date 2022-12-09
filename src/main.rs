@@ -80,10 +80,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Shaders
     let mut my_shader = MyShader {
         model: &model,
-        uniform_model_view_mat: model_view,
+        uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
-        uniform_projection_mat: projection,
-        uniform_viewport_mat: viewport,
+        uniform_projection: projection,
+        uniform_viewport: viewport,
         uniform_light: (model_view * light.insert_row(3, 0.)).normalize().xyz(),
         uniform_texture: texture,
         varying_uv: Matrix2x3::<f32>::zeros(),
