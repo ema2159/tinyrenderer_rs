@@ -3,65 +3,11 @@ pub mod gl;
 mod line;
 pub mod shaders;
 
-use self::{line::draw_line, shaders::Shader};
-use image::{Rgba, RgbaImage};
+use self::shaders::Shader;
+use image::RgbaImage;
 use nalgebra::{Point2, Point4, Vector2, Vector3};
 use obj::{Obj, TexturedVertex};
 
-fn draw_flat_triangle(
-    edge: &Point2<i32>,
-    base_l: &Point2<i32>,
-    base_r: &Point2<i32>,
-    color: Rgba<u8>,
-    color_buffer: &mut RgbaImage,
-) {
-    let invslope20: f32 = (base_l.x - edge.x) as f32 / (base_l.y - edge.y) as f32;
-    let invslope21: f32 = (base_r.x - edge.x) as f32 / (base_r.y - edge.y) as f32;
-    let mut x0 = edge.x as f32;
-    let mut x1 = edge.x as f32;
-    if edge.y < base_l.y {
-        // =base_l.y = base_r.y
-        for y in edge.y..=base_l.y {
-            draw_line(
-                &Point2::<i32>::new(x0 as i32, y),
-                &Point2::<i32>::new(x1 as i32, y),
-                color,
-                color_buffer,
-            );
-            x1 += invslope20;
-            x0 += invslope21;
-        }
-    } else {
-        for y in (base_l.y..=edge.y).rev() {
-            draw_line(
-                &Point2::<i32>::new(x0 as i32, y),
-                &Point2::<i32>::new(x1 as i32, y),
-                color,
-                color_buffer,
-            );
-            x1 -= invslope20;
-            x0 -= invslope21;
-        }
-    }
-}
-
-/// Implementation of line sweeping algorithm for triangle filling
-fn draw_face_line_sweeping(screen_coords: &[Point2<i32>; 3], color: Rgba<u8>, color_buffer: &mut RgbaImage) {
-    let v0 = &screen_coords[0];
-    let v1 = &screen_coords[1];
-    let v2 = &screen_coords[2];
-    let mut points = [v0, v1, v2];
-    points.sort_by_key(|k| k.y);
-    let [v0, v1, v2] = points;
-    let v3_y = v1.y;
-    let v3_x =
-        v2.x + ((((v1.y - v2.y) as f32) / ((v0.y - v2.y) as f32)) * (v0.x - v2.x) as f32) as i32;
-    // v3 corresponds to the point that is at the same height as the second-most vertex height-wise
-    // that is at the edge of the triangle that is opposite of such a vertex
-    let v3 = Point2::<i32>::new(v3_x, v3_y);
-    draw_flat_triangle(&v2, &v1, &v3, color, color_buffer);
-    draw_flat_triangle(&v0, &v1, &v3, color, color_buffer);
-}
 
 /// Implementation of barycentric algorithm for triangle filling. Works as the rasterizer.
 fn draw_face_barycentric(
