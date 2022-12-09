@@ -63,21 +63,6 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f
     [point0, point1, point2]
 }
 
-fn get_face_texture_coords(
-    model: &Obj<TexturedVertex>,
-    face: &[u16],
-    texture_width: f32,
-    texture_height: f32,
-) -> [Point2<f32>; 3] {
-    let [v0x, v0y, _] = model.vertices[face[0] as usize].texture;
-    let [v1x, v1y, _] = model.vertices[face[1] as usize].texture;
-    let [v2x, v2y, _] = model.vertices[face[2] as usize].texture;
-    let texcoord0 = Point2::<f32>::new((v0x * texture_width) - 1., (v0y * texture_height) - 1.);
-    let texcoord1 = Point2::<f32>::new((v1x * texture_width) - 1., (v1y * texture_height) - 1.);
-    let texcoord2 = Point2::<f32>::new((v2x * texture_width) - 1., (v2y * texture_height) - 1.);
-    [texcoord0, texcoord1, texcoord2]
-}
-
 fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3<f32>; 3] {
     let [v0x, v0y, v0z] = model.vertices[face[0] as usize].normal;
     let [v1x, v1y, v1z] = model.vertices[face[1] as usize].normal;
