@@ -6,7 +6,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use nalgebra::{Matrix2x3, Matrix3, Point3, Vector3};
+use nalgebra::{Matrix2x3, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
@@ -29,21 +29,27 @@ pub struct Camera {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
-    // Object and texture
+    // Load model
     let obj_path =
         Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head.obj");
-    let texture_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_diffuse.tga");
-
-    // Load model
     let input = BufReader::new(File::open(&obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
+    let texture_path =
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
+
+    // Load normal map
+    let normal_map_path =
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_nm.tga");
+    let mut normal_map = image::open(normal_map_path)
+        .expect("Opening image failed")
+        .into_rgba8();
+    image::imageops::flip_vertical_in_place(&mut normal_map);
 
     // Frame properties
     let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
@@ -84,10 +90,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_model_view_it: model_view_it,
         uniform_projection: projection,
         uniform_viewport: viewport,
-        uniform_light: (model_view * light.insert_row(3, 0.)).normalize().xyz(),
+        uniform_light: (model_view * light.insert_row(3, 0.)).xyz().normalize(),
         uniform_texture: texture,
         varying_uv: Matrix2x3::<f32>::zeros(),
-        varying_normals: Matrix3::<f32>::zeros(),
+        uniform_normal_map: normal_map,
     };
 
     use std::time::Instant;
