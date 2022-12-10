@@ -62,16 +62,6 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f
     [point0, point1, point2]
 }
 
-fn get_face_normal_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Vector3<f32>; 3] {
-    let [v0x, v0y, v0z] = model.vertices[face[0] as usize].normal;
-    let [v1x, v1y, v1z] = model.vertices[face[1] as usize].normal;
-    let [v2x, v2y, v2z] = model.vertices[face[2] as usize].normal;
-    let normal0 = Vector3::<f32>::new(v0x, v0y, v0z);
-    let normal1 = Vector3::<f32>::new(v1x, v1y, v1z);
-    let normal2 = Vector3::<f32>::new(v2x, v2y, v2z);
-    [normal0, normal1, normal2]
-}
-
 /// Draw triangle faces of given 3D object. Works as the primitive processor.
 pub fn draw_faces(
     model: &Obj<TexturedVertex>,
