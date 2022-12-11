@@ -30,7 +30,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     // Assets dir
-    let assets_dir = Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/");
+    let assets_dir =
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head");
 
     // Load model
     let obj_path = assets_dir.join("african_head.obj");
