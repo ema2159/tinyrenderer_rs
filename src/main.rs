@@ -6,7 +6,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use nalgebra::{Matrix2x3, Point3, Vector3};
+use nalgebra::{Matrix2x3, Matrix3, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::error::Error;
@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Assets dir
     let assets_dir =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head");
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head/");
 
     // Load model
     let obj_path = assets_dir.join("african_head.obj");
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Load normal map
-    let normal_map_path = assets_dir.join("african_head_nm.tga");
+    let normal_map_path = assets_dir.join("african_head_nm_tangent.tga");
     let mut normal_map = image::open(normal_map_path)
         .expect("Opening image failed")
         .into_rgba8();
@@ -106,6 +106,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_specular_map: specular_map,
 
         varying_uv: Matrix2x3::<f32>::zeros(),
+        varying_normals: Matrix3::<f32>::zeros(),
+        varying_ndc_tri: Matrix3::<f32>::zeros(),
     };
 
     use std::time::Instant;

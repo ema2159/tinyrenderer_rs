@@ -1,5 +1,5 @@
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{clamp, Matrix2x3, Matrix4, Point2, Point4, Vector2, Vector3, Vector4};
+use nalgebra::{clamp, Matrix2x3, Matrix3, Matrix4, Point2, Point4, Vector2, Vector3, Vector4};
 use obj::{Obj, TexturedVertex};
 
 pub trait Shader {
@@ -20,6 +20,8 @@ pub struct MyShader<'a> {
     pub uniform_specular_map: RgbaImage,
 
     pub varying_uv: Matrix2x3<f32>,
+    pub varying_normals: Matrix3<f32>,
+    pub varying_ndc_tri: Matrix3<f32>,
 }
 
 fn sample_2d(texture: &RgbaImage, uv: Point2<f32>) -> Rgba<u8> {
@@ -34,6 +36,10 @@ impl Shader for MyShader<'_> {
         let [u, v, _] = self.model.vertices[face_idx as usize].texture;
         self.varying_uv.set_column(nthvert, &Vector2::new(u, v));
 
+        let [i, j, k] = self.model.vertices[face_idx as usize].normal;
+        let normal = self.uniform_model_view_it * Vector4::new(i, j, k, 1.);
+        self.varying_normals.set_column(nthvert, &normal.xyz());
+
         *gl_position =
             Point4::from(self.uniform_projection * self.uniform_model_view * gl_position.coords);
         *gl_position /= gl_position.w;
@@ -41,14 +47,41 @@ impl Shader for MyShader<'_> {
         gl_position.x = clamp(gl_position.x, -1.0, 1.0);
         gl_position.y = clamp(gl_position.y, -1.0, 1.0);
         *gl_position = Point4::from(self.uniform_viewport * gl_position.coords);
+        self.varying_ndc_tri
+            .set_column(nthvert, &(*gl_position / gl_position.z).xyz().coords);
     }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         // Texture coords
         let uv = Point2::<f32>::from(self.varying_uv * bar_coords);
-        // Normal computing
-        let Rgba([i, j, k, _]) = sample_2d(&self.uniform_normal_map, uv);
-        let normal_map = Vector4::new(i, j, k, 255).map(|x| ((x as f32 / 255.) * 2.) - 1.);
-        let normal = (self.uniform_model_view_it * normal_map).xyz().normalize();
+        // Normal computing using Darboux tangent space normal mapping
+        let bnormal = self.varying_normals * bar_coords;
+
+        let a_row0 = (self.varying_ndc_tri.column(1) - self.varying_ndc_tri.column(0)).transpose();
+        let a_row1 = (self.varying_ndc_tri.column(2) - self.varying_ndc_tri.column(0)).transpose();
+        let a_row2 = bnormal.transpose();
+        let a_inv_mat = Matrix3::from_rows(&[a_row0, a_row1, a_row2])
+            .try_inverse()
+            .unwrap();
+
+        let i = a_inv_mat
+            * Vector3::new(
+                self.varying_uv.column(1)[0] - self.varying_uv.column(0)[0],
+                self.varying_uv.column(2)[0] - self.varying_uv.column(0)[0],
+                0.,
+            );
+
+        let j = a_inv_mat
+            * Vector3::new(
+                self.varying_uv.column(1)[1] - self.varying_uv.column(0)[1],
+                self.varying_uv.column(2)[1] - self.varying_uv.column(0)[1],
+                0.,
+            );
+
+        let b_mat = Matrix3::from_columns(&[i.normalize(), j.normalize(), bnormal]);
+
+        let Rgba([x, y, z, _]) = sample_2d(&self.uniform_normal_map, uv);
+        let darboux_mapping = Vector3::new(x, y, z).map(|w| ((w as f32 / 255.) * 2.) - 1.);
+        let normal = b_mat * darboux_mapping;
 
         // Lighting computing
         let reflected = (normal * (normal.dot(&self.uniform_dir_light) * 2.)
@@ -64,7 +97,7 @@ impl Shader for MyShader<'_> {
         // Fragment calculation
         let mut gl_frag_color = sample_2d(&self.uniform_texture, uv);
         gl_frag_color.apply_without_alpha(|ch| {
-            (self.uniform_ambient_light + (ch as f32) * (diffuse + specular)) as u8
+            (self.uniform_ambient_light + (ch as f32) * (diffuse + 0.6 * specular)) as u8
         });
         Some(gl_frag_color)
     }
