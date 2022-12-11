@@ -29,31 +29,30 @@ pub struct Camera {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
+    // Assets dir
+    let assets_dir = Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/");
+
     // Load model
-    let obj_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head.obj");
+    let obj_path = assets_dir.join("african_head.obj");
     let input = BufReader::new(File::open(obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
-    let texture_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_diffuse.tga");
+    let texture_path = assets_dir.join("african_head_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Load normal map
-    let normal_map_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_nm.tga");
+    let normal_map_path = assets_dir.join("african_head_nm.tga");
     let mut normal_map = image::open(normal_map_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut normal_map);
 
     // Load specular map
-    let specular_map_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_spec.tga");
+    let specular_map_path = assets_dir.join("african_head_spec.tga");
     let mut specular_map = image::open(specular_map_path)
         .expect("Opening image failed")
         .into_rgba8();
