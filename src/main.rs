@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Load model
     let obj_path =
         Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head.obj");
-    let input = BufReader::new(File::open(&obj_path)?);
+    let input = BufReader::new(File::open(obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         model_scale,
         Vector3::new(0., 1., 0.),
     );
-    let model_view_it = model_view.clone().try_inverse().unwrap().transpose();
+    let model_view_it = model_view.try_inverse().unwrap().transpose();
     let projection = get_projection_matrix(camera.focal_length);
     let viewport = get_viewport_matrix(height, width, 1024.);
 

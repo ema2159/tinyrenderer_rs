@@ -13,7 +13,7 @@ fn draw_face_barycentric(
     screen_coords: [Point4<f32>; 3],
     shaders: &dyn Shader,
     color_buffer: &mut RgbaImage,
-    z_buffer: &mut Vec<Vec<f32>>,
+    z_buffer: &mut [Vec<f32>],
 ) {
     let [v0_w, v1_w, v2_w] = screen_coords;
     // Define triangle bounding box
@@ -30,7 +30,7 @@ fn draw_face_barycentric(
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..=max_y {
-            let pv0 = Vector2::from(Point2::<f32>::new(x as f32, y as f32) - v0_w.xy());
+            let pv0 = Point2::<f32>::new(x as f32, y as f32) - v0_w.xy();
             let vec1_x_pv0 = vec1.perp(&pv0) as f32;
             let pv0_x_vec2 = pv0.perp(&vec2) as f32;
             // Barycentric coordinates
@@ -66,14 +66,14 @@ fn get_face_world_coords(model: &Obj<TexturedVertex>, face: &[u16]) -> [Point4<f
 pub fn draw_faces(
     model: &Obj<TexturedVertex>,
     color_buffer: &mut RgbaImage,
-    z_buffer: &mut Vec<Vec<f32>>,
+    z_buffer: &mut [Vec<f32>],
     shaders: &mut dyn Shader,
 ) {
     let faces_num = model.indices.len();
     let faces = &model.indices[..faces_num];
 
     for face in faces.chunks(3) {
-        let mut verts = get_face_world_coords(&model, face);
+        let mut verts = get_face_world_coords(model, face);
         for (i, vert) in verts.iter_mut().enumerate() {
             shaders.vertex_shader(face[i], i, vert);
         }
