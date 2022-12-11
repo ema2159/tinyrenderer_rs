@@ -49,6 +49,8 @@ impl Shader for MyShader<'_> {
         let Rgba([i, j, k, _]) = sample_2d(&self.uniform_normal_map, uv);
         let normal_map = Vector4::new(i, j, k, 255).map(|x| ((x as f32 / 255.) * 2.) - 1.);
         let normal = (self.uniform_model_view_it * normal_map).xyz().normalize();
+
+        // Lighting computing
         let reflected = (normal * (normal.dot(&self.uniform_dir_light) * 2.)
             - self.uniform_dir_light)
             .normalize();
