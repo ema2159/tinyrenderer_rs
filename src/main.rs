@@ -51,6 +51,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut normal_map);
 
+    // Load specular map
+    let specular_map_path =
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head_spec.tga");
+    let mut specular_map = image::open(specular_map_path)
+        .expect("Opening image failed")
+        .into_rgba8();
+    image::imageops::flip_vertical_in_place(&mut specular_map);
+
     // Frame properties
     let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
 
@@ -66,7 +74,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     // Light configuration
-    let light = Vector3::new(0., 0., 1.);
+    let ambient_light = 5.;
+    let dir_light = Vector3::new(0., 0., 1.);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
@@ -90,10 +99,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_model_view_it: model_view_it,
         uniform_projection: projection,
         uniform_viewport: viewport,
-        uniform_light: (model_view * light.insert_row(3, 0.)).xyz().normalize(),
+        uniform_ambient_light: ambient_light,
+        uniform_dir_light: (model_view * dir_light.insert_row(3, 0.)).xyz().normalize(),
         uniform_texture: texture,
-        varying_uv: Matrix2x3::<f32>::zeros(),
         uniform_normal_map: normal_map,
+        uniform_specular_map: specular_map,
+
+        varying_uv: Matrix2x3::<f32>::zeros(),
     };
 
     use std::time::Instant;

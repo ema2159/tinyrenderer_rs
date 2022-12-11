@@ -13,9 +13,11 @@ pub struct MyShader<'a> {
     pub uniform_model_view_it: Matrix4<f32>,
     pub uniform_projection: Matrix4<f32>,
     pub uniform_viewport: Matrix4<f32>,
-    pub uniform_light: Vector3<f32>,
+    pub uniform_ambient_light: f32,
+    pub uniform_dir_light: Vector3<f32>,
     pub uniform_texture: RgbaImage,
     pub uniform_normal_map: RgbaImage,
+    pub uniform_specular_map: RgbaImage,
 
     pub varying_uv: Matrix2x3<f32>,
 }
@@ -47,11 +49,21 @@ impl Shader for MyShader<'_> {
         let Rgba([i, j, k, _]) = sample_2d(&self.uniform_normal_map, uv);
         let normal_map = Vector4::new(i, j, k, 255).map(|x| ((x as f32 / 255.) * 2.) - 1.);
         let normal = (self.uniform_model_view_it * normal_map).xyz().normalize();
+        let reflected = (normal * (normal.dot(&self.uniform_dir_light) * 2.)
+            - self.uniform_dir_light)
+            .normalize();
+
+        let specular = f32::powi(
+            f32::max(0., reflected.z),
+            sample_2d(&self.uniform_specular_map, uv)[0].into(),
+        );
+        let diffuse = f32::max(0., self.uniform_dir_light.dot(&normal));
 
         // Fragment calculation
-        let intensity = f32::max(0., self.uniform_light.dot(&normal));
         let mut gl_frag_color = sample_2d(&self.uniform_texture, uv);
-        gl_frag_color.apply_without_alpha(|ch| ((ch as f32) * intensity) as u8);
+        gl_frag_color.apply_without_alpha(|ch| {
+            (self.uniform_ambient_light + (ch as f32) * (diffuse + specular)) as u8
+        });
         Some(gl_frag_color)
     }
 }
