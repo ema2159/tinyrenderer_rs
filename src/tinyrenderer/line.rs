@@ -39,19 +39,19 @@ fn line(start: &Point2<i32>, end: &Point2<i32>) -> Vec<Point2<i32>> {
         for x in x0..=x1 {
             result.push(Point2::<i32>::new(y, x));
             if d > 0 {
-                y = y + yi;
-                d = d - 2 * dx;
+                y += yi;
+                d -= 2 * dx;
             }
-            d = d + 2 * dy;
+            d += 2 * dy;
         }
     } else {
         for x in x0..=x1 {
             result.push(Point2::<i32>::new(x, y));
             if d > 0 {
-                y = y + yi;
-                d = d - 2 * dx;
+                y += yi;
+                d -= 2 * dx;
             }
-            d = d + 2 * dy;
+            d += 2 * dy;
         }
     };
     result
@@ -59,9 +59,9 @@ fn line(start: &Point2<i32>, end: &Point2<i32>) -> Vec<Point2<i32>> {
 
 /// Draw line given a set of points
 pub fn draw_line(start: &Point2<i32>, end: &Point2<i32>, color: Rgba<u8>, img: &mut RgbaImage) {
-    let line = line(&start, &end);
-    let mut line_iter = line.iter();
-    while let Some(point) = line_iter.next() {
+    let line = line(start, end);
+    let line_iter = line.iter();
+    for point in line_iter {
         img.put_pixel(point.x as u32, point.y as u32, color);
     }
 }
