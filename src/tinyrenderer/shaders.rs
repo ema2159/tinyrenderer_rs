@@ -43,12 +43,12 @@ impl Shader for MyShader<'_> {
         *gl_position =
             Point4::from(self.uniform_projection * self.uniform_model_view * gl_position.coords);
         *gl_position /= gl_position.w;
+        self.varying_ndc_tri
+            .set_column(nthvert, &gl_position.xyz().coords);
         // Clip out of frame points
         gl_position.x = clamp(gl_position.x, -1.0, 1.0);
         gl_position.y = clamp(gl_position.y, -1.0, 1.0);
         *gl_position = Point4::from(self.uniform_viewport * gl_position.coords);
-        self.varying_ndc_tri
-            .set_column(nthvert, &(*gl_position / gl_position.z).xyz().coords);
     }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         // Texture coords
