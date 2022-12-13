@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Light configuration
     let ambient_light = 5.;
-    let dir_light = Vector3::new(1., 1., 1.);
+    let dir_light = Vector3::new(0., 0., 1.);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
@@ -95,24 +95,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         model_scale,
         Vector3::new(0., 1., 0.),
     );
-    let shadow_model_view = get_model_view_matrix(
-        Point3::<f32>::origin() + dir_light,
-        model_pos,
-        model_pos,
-        model_scale,
-        Vector3::new(0., 1., 0.),
-    );
     let projection = get_projection_matrix(camera.focal_length);
     let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, depth);
+
+    let shadow_mat = viewport
+        * projection
+        * get_model_view_matrix(
+            Point3::<f32>::origin() + dir_light,
+            model_pos,
+            model_pos,
+            model_scale,
+            Vector3::new(0., 1., 0.),
+        );
 
     // Shaders
     let mut shadow_shader = ShadowShader {
         model: &model,
         uniform_depth: depth,
-        uniform_model_view: shadow_model_view,
-        uniform_viewport: viewport,
-        uniform_projection: projection,
+        uniform_shadow_mat: shadow_mat,
 
         varying_ndc_tri: Matrix3::<f32>::zeros(),
     };
@@ -126,8 +127,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut rendering_shader = RenderingShader {
         model: &model,
+        shadow_buffer: &shadow_buffer,
         uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
+        uniform_shadow_mat: shadow_mat,
         uniform_projection: projection,
         uniform_viewport: viewport,
         uniform_ambient_light: ambient_light,
@@ -167,7 +170,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let rendered_img = piston_window::Texture::from_image(
         &mut window.create_texture_context(),
-        &depth_buffer,
+        &color_buffer,
         &piston_window::TextureSettings::new(),
     )
     .unwrap();

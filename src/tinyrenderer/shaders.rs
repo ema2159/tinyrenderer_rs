@@ -16,15 +16,17 @@ fn sample_2d(texture: &RgbaImage, uv: Point2<f32>) -> Rgba<u8> {
 
 pub struct RenderingShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
+    pub shadow_buffer: &'a [Vec<f32>],
     pub uniform_model_view: Matrix4<f32>,
     pub uniform_model_view_it: Matrix4<f32>,
+    pub uniform_shadow_mat: Matrix4<f32>,
     pub uniform_projection: Matrix4<f32>,
     pub uniform_viewport: Matrix4<f32>,
     pub uniform_ambient_light: f32,
     pub uniform_dir_light: Vector3<f32>,
     pub uniform_texture: RgbaImage,
-    pub uniform_normal_map: RgbaImage,
     pub uniform_specular_map: RgbaImage,
+    pub uniform_normal_map: RgbaImage,
 
     pub varying_uv: Matrix2x3<f32>,
     pub varying_normals: Matrix3<f32>,
@@ -55,6 +57,16 @@ impl Shader for RenderingShader<'_> {
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         // Texture coords
         let uv = Point2::<f32>::from(self.varying_uv * bar_coords);
+        // Shadow calculation
+        let mut shad_buf_p =
+            self.uniform_shadow_mat * (self.varying_ndc_tri * bar_coords).insert_row(3, 1.);
+        shad_buf_p /= shad_buf_p.w;
+        let shadow =
+            if self.shadow_buffer[shad_buf_p.x as usize][shad_buf_p.y as usize] < shad_buf_p.z {
+                0.3
+            } else {
+                1.
+            };
         // Normal computing using Darboux tangent space normal mapping
         let bnormal = self.varying_normals * bar_coords;
 
@@ -99,7 +111,7 @@ impl Shader for RenderingShader<'_> {
         // Fragment calculation
         let mut gl_frag_color = sample_2d(&self.uniform_texture, uv);
         gl_frag_color.apply_without_alpha(|ch| {
-            (self.uniform_ambient_light + (ch as f32) * (diffuse + 0.6 * specular)) as u8
+            (self.uniform_ambient_light + (ch as f32) * shadow * (diffuse + 0.6 * specular)) as u8
         });
         Some(gl_frag_color)
     }
@@ -108,21 +120,14 @@ impl Shader for RenderingShader<'_> {
 pub struct ShadowShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
     pub uniform_depth: f32,
-    pub uniform_model_view: Matrix4<f32>,
-    pub uniform_viewport: Matrix4<f32>,
-    pub uniform_projection: Matrix4<f32>,
+    pub uniform_shadow_mat: Matrix4<f32>,
 
     pub varying_ndc_tri: Matrix3<f32>,
 }
 
 impl Shader for ShadowShader<'_> {
     fn vertex_shader(&mut self, _face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {
-        *gl_position = Point4::from(
-            self.uniform_viewport
-                * self.uniform_projection
-                * self.uniform_model_view
-                * gl_position.coords,
-        );
+        *gl_position = Point4::from(self.uniform_shadow_mat * gl_position.coords);
         *gl_position /= gl_position.w;
         self.varying_ndc_tri
             .set_column(nthvert, &gl_position.xyz().coords);
