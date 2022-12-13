@@ -7,7 +7,14 @@ pub trait Shader {
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>>;
 }
 
-pub struct MyShader<'a> {
+fn sample_2d(texture: &RgbaImage, uv: Point2<f32>) -> Rgba<u8> {
+    *texture.get_pixel(
+        ((uv.x * texture.width() as f32) - 1.) as u32,
+        ((uv.y * texture.height() as f32) - 1.) as u32,
+    )
+}
+
+pub struct RenderingShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
     pub uniform_model_view: Matrix4<f32>,
     pub uniform_model_view_it: Matrix4<f32>,
@@ -24,14 +31,7 @@ pub struct MyShader<'a> {
     pub varying_ndc_tri: Matrix3<f32>,
 }
 
-fn sample_2d(texture: &RgbaImage, uv: Point2<f32>) -> Rgba<u8> {
-    *texture.get_pixel(
-        ((uv.x * texture.width() as f32) - 1.) as u32,
-        ((uv.y * texture.height() as f32) - 1.) as u32,
-    )
-}
-
-impl Shader for MyShader<'_> {
+impl Shader for RenderingShader<'_> {
     fn vertex_shader(&mut self, face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {
         let [u, v, _] = self.model.vertices[face_idx as usize].texture;
         self.varying_uv.set_column(nthvert, &Vector2::new(u, v));
@@ -100,5 +100,16 @@ impl Shader for MyShader<'_> {
             (self.uniform_ambient_light + (ch as f32) * (diffuse + 0.6 * specular)) as u8
         });
         Some(gl_frag_color)
+    }
+}
+
+pub struct ShadowShader<'a> {
+    pub model: &'a Obj<TexturedVertex>,
+}
+
+impl Shader for ShadowShader<'_> {
+    fn vertex_shader(&mut self, face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {}
+    fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
+        Some(Rgba([0, 0, 0, 0]))
     }
 }

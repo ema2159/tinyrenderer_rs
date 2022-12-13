@@ -15,7 +15,7 @@ use std::io::BufReader;
 use std::path::Path;
 use tinyrenderer::draw_faces;
 use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
-use tinyrenderer::shaders::MyShader;
+use tinyrenderer::shaders::RenderingShader;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let viewport = get_viewport_matrix(height, width, 1024.);
 
     // Shaders
-    let mut my_shader = MyShader {
+    let mut my_shader = RenderingShader {
         model: &model,
         uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
