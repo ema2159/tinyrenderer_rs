@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 pub mod gl;
-pub mod line;
 pub mod shaders;
 
 use self::shaders::Shader;
