@@ -107,11 +107,30 @@ impl Shader for RenderingShader<'_> {
 
 pub struct ShadowShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
+    pub uniform_depth: f32,
+    pub uniform_model_view: Matrix4<f32>,
+    pub uniform_viewport: Matrix4<f32>,
+    pub uniform_projection: Matrix4<f32>,
+
+    pub varying_ndc_tri: Matrix3<f32>,
 }
 
 impl Shader for ShadowShader<'_> {
-    fn vertex_shader(&mut self, face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {}
+    fn vertex_shader(&mut self, _face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {
+        *gl_position = Point4::from(
+            self.uniform_viewport
+                * self.uniform_projection
+                * self.uniform_model_view
+                * gl_position.coords,
+        );
+        *gl_position /= gl_position.w;
+        self.varying_ndc_tri
+            .set_column(nthvert, &gl_position.xyz().coords);
+    }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
-        Some(Rgba([0, 0, 0, 0]))
+        let p = self.varying_ndc_tri * bar_coords;
+        let mut gl_frag_color = Rgba([255, 255, 255, 255]);
+        gl_frag_color.apply_without_alpha(|ch| ((ch as f32) * (p.z / self.uniform_depth)) as u8);
+        Some(gl_frag_color)
     }
 }

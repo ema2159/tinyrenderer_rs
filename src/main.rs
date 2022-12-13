@@ -17,6 +17,8 @@ use tinyrenderer::draw_faces;
 use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
 use tinyrenderer::shaders::RenderingShader;
 
+use crate::tinyrenderer::shaders::ShadowShader;
+
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
 
@@ -28,6 +30,7 @@ pub struct Camera {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
+    let mut depth_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     // Assets dir
     let assets_dir =
@@ -61,6 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Frame properties
     let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
+    let depth = 1024.;
 
     // Model configuration
     let model_pos = Point3::new(0., 0., 0.);
@@ -80,6 +84,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
+    // shadow buffer
+    let mut shadow_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
+
     // Transformation matrices
     let model_view = get_model_view_matrix(
         camera.position,
@@ -88,12 +95,36 @@ fn main() -> Result<(), Box<dyn Error>> {
         model_scale,
         Vector3::new(0., 1., 0.),
     );
+    let shadow_model_view = get_model_view_matrix(
+        Point3::<f32>::origin() + dir_light,
+        model_pos,
+        model_pos,
+        model_scale,
+        Vector3::new(0., 1., 0.),
+    );
     let projection = get_projection_matrix(camera.focal_length);
     let model_view_it = model_view.try_inverse().unwrap().transpose();
-    let viewport = get_viewport_matrix(height, width, 1024.);
+    let viewport = get_viewport_matrix(height, width, depth);
 
     // Shaders
-    let mut my_shader = RenderingShader {
+    let mut shadow_shader = ShadowShader {
+        model: &model,
+        uniform_depth: depth,
+        uniform_model_view: shadow_model_view,
+        uniform_viewport: viewport,
+        uniform_projection: projection,
+
+        varying_ndc_tri: Matrix3::<f32>::zeros(),
+    };
+    draw_faces(
+        &model,
+        &mut depth_buffer,
+        &mut shadow_buffer,
+        &mut shadow_shader,
+    );
+    image::imageops::flip_vertical_in_place(&mut depth_buffer);
+
+    let mut rendering_shader = RenderingShader {
         model: &model,
         uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
@@ -112,7 +143,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     use std::time::Instant;
     let now = Instant::now();
-    draw_faces(&model, &mut color_buffer, &mut z_buffer, &mut my_shader);
+    draw_faces(
+        &model,
+        &mut color_buffer,
+        &mut z_buffer,
+        &mut rendering_shader,
+    );
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
@@ -131,7 +167,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let rendered_img = piston_window::Texture::from_image(
         &mut window.create_texture_context(),
-        &color_buffer,
+        &depth_buffer,
         &piston_window::TextureSettings::new(),
     )
     .unwrap();
