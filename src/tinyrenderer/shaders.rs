@@ -37,8 +37,10 @@ impl Shader for RenderingShader<'_> {
         self.varying_uv.set_column(nthvert, &Vector2::new(u, v));
 
         let [i, j, k] = self.model.vertices[face_idx as usize].normal;
-        let normal = self.uniform_model_view_it * Vector4::new(i, j, k, 1.);
-        self.varying_normals.set_column(nthvert, &normal.xyz());
+        let normal = (self.uniform_model_view_it * Vector4::new(i, j, k, 0.))
+            .xyz()
+            .normalize();
+        self.varying_normals.set_column(nthvert, &normal);
 
         *gl_position =
             Point4::from(self.uniform_projection * self.uniform_model_view * gl_position.coords);

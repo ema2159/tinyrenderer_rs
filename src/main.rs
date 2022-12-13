@@ -69,13 +69,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Camera configuration
     let camera = Camera {
         position: Point3::new(0.5, 0.5, 1.),
-        focal_length: 1.,
+        focal_length: 3.,
         view_point: model_pos,
     };
 
     // Light configuration
     let ambient_light = 5.;
-    let dir_light = Vector3::new(0., 0., 1.);
+    let dir_light = Vector3::new(1., 1., 1.);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
@@ -88,8 +88,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         model_scale,
         Vector3::new(0., 1., 0.),
     );
-    let model_view_it = model_view.try_inverse().unwrap().transpose();
     let projection = get_projection_matrix(camera.focal_length);
+    let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, 1024.);
 
     // Shaders
