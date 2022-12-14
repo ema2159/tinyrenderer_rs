@@ -30,7 +30,7 @@ pub struct Camera {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
-    let mut depth_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
+    let mut _buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     // Assets dir
     let assets_dir =
@@ -110,19 +110,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Shaders
     let mut shadow_shader = ShadowShader {
         model: &model,
-        uniform_depth: depth,
         uniform_shadow_mv_mat: shadow_mat,
         uniform_viewport: viewport,
 
         varying_ndc_tri: Matrix3::<f32>::zeros(),
     };
+    // Compute shadows
     draw_faces(
         &model,
-        &mut depth_buffer,
+        &mut _buffer,
         &mut shadow_buffer,
         &mut shadow_shader,
     );
-    image::imageops::flip_vertical_in_place(&mut depth_buffer);
 
     let mut rendering_shader = RenderingShader {
         model: &model,

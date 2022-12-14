@@ -129,7 +129,6 @@ impl Shader for RenderingShader<'_> {
 
 pub struct ShadowShader<'a> {
     pub model: &'a Obj<TexturedVertex>,
-    pub uniform_depth: f32,
     pub uniform_shadow_mv_mat: Matrix4<f32>,
     pub uniform_viewport: Matrix4<f32>,
 
@@ -146,12 +145,7 @@ impl Shader for ShadowShader<'_> {
         self.varying_ndc_tri
             .set_column(nthvert, &gl_position.xyz().coords);
     }
-    fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
-        let p = self.varying_ndc_tri * bar_coords;
-        let mut gl_frag_color = Rgba([255, 255, 255, 255]);
-        gl_frag_color.apply_without_alpha(|ch| {
-            ((ch as f32) * ((p.z + (self.uniform_depth / 2.)) / self.uniform_depth)) as u8
-        });
-        Some(gl_frag_color)
+    fn fragment_shader(&self, _bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
+        None
     }
 }
