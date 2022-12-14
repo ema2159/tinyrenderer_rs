@@ -34,29 +34,29 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Assets dir
     let assets_dir =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head/");
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/diablo3_pose/");
 
     // Load model
-    let obj_path = assets_dir.join("african_head.obj");
+    let obj_path = assets_dir.join("diablo3_pose.obj");
     let input = BufReader::new(File::open(obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
-    let texture_path = assets_dir.join("african_head_diffuse.tga");
+    let texture_path = assets_dir.join("diablo3_pose_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Load normal map
-    let normal_map_path = assets_dir.join("african_head_nm_tangent.tga");
+    let normal_map_path = assets_dir.join("diablo3_pose_nm_tangent.tga");
     let mut normal_map = image::open(normal_map_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut normal_map);
 
     // Load specular map
-    let specular_map_path = assets_dir.join("african_head_spec.tga");
+    let specular_map_path = assets_dir.join("diablo3_pose_spec.tga");
     let mut specular_map = image::open(specular_map_path)
         .expect("Opening image failed")
         .into_rgba8();
@@ -72,14 +72,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Camera configuration
     let camera = Camera {
-        position: Point3::new(0.5, 0.5, 1.),
+        position: Point3::new(0., 0., 1.),
         focal_length: 3.,
         view_point: model_pos,
     };
 
     // Light configuration
     let ambient_light = 5.;
-    let dir_light = Vector3::new(0., 0., 1.);
+    let dir_light = Vector3::new(-1., 0., 1.5);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
@@ -99,21 +99,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, depth);
 
-    let shadow_mat = viewport
-        * projection
-        * get_model_view_matrix(
-            Point3::<f32>::origin() + dir_light,
-            model_pos,
-            model_pos,
-            model_scale,
-            Vector3::new(0., 1., 0.),
-        );
+    let shadow_mat = get_model_view_matrix(
+        Point3::<f32>::origin() + dir_light,
+        model_pos,
+        model_pos,
+        model_scale,
+        Vector3::new(0., 1., 0.),
+    );
 
     // Shaders
     let mut shadow_shader = ShadowShader {
         model: &model,
         uniform_depth: depth,
-        uniform_shadow_mat: shadow_mat,
+        uniform_shadow_mv_mat: shadow_mat,
+        uniform_viewport: viewport,
 
         varying_ndc_tri: Matrix3::<f32>::zeros(),
     };
@@ -130,7 +129,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         shadow_buffer: &shadow_buffer,
         uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
-        uniform_shadow_mat: shadow_mat,
+        uniform_shadow_mv_mat: shadow_mat,
         uniform_projection: projection,
         uniform_viewport: viewport,
         uniform_ambient_light: ambient_light,
@@ -142,6 +141,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         varying_uv: Matrix2x3::<f32>::zeros(),
         varying_normals: Matrix3::<f32>::zeros(),
         varying_ndc_tri: Matrix3::<f32>::zeros(),
+        varying_shadow_tri: Matrix3::<f32>::zeros(),
     };
 
     use std::time::Instant;
