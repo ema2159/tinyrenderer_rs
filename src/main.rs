@@ -62,6 +62,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut specular_map);
 
+    use std::time::Instant;
+    let now = Instant::now();
+
     // Frame properties
     let (width, height) = (color_buffer.width() as f32, color_buffer.height() as f32);
     let depth = 1024.;
@@ -143,18 +146,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         varying_shadow_tri: Matrix3::<f32>::zeros(),
     };
 
-    use std::time::Instant;
-    let now = Instant::now();
+    // Render model
     draw_faces(
         &model,
         &mut color_buffer,
         &mut z_buffer,
         &mut rendering_shader,
     );
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
 
     image::imageops::flip_vertical_in_place(&mut color_buffer);
+
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 
     // Rendering window
     let mut window: piston_window::PistonWindow =
