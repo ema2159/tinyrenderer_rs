@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Camera configuration
     let camera = Camera {
         position: Point3::new(0.5, 0.5, 1.),
-        focal_length: 1.,
+        focal_length: 3.,
         view_point: model_pos,
     };
 
