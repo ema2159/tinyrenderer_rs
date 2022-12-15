@@ -119,12 +119,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         varying_ndc_tri: Matrix3::<f32>::zeros(),
     };
     // Compute shadows
-    draw_faces(
-        &model,
-        &mut _buffer,
-        &mut shadow_buffer,
-        &mut shadow_shader,
-    );
+    draw_faces(&model, &mut _buffer, &mut shadow_buffer, &mut shadow_shader);
 
     let mut rendering_shader = RenderingShader {
         model: &model,

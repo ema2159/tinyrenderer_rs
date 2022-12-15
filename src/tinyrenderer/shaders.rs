@@ -119,7 +119,7 @@ impl Shader for RenderingShader<'_> {
 
         let specular = f32::powi(
             f32::max(0., reflected.z),
-            sample_2d(&self.uniform_specular_map, uv)[0].into(),
+            (1 + sample_2d(&self.uniform_specular_map, uv)[0]).into(), // The 1 prevents pow to 0 bug
         );
         let diffuse = f32::max(0., self.uniform_dir_light.dot(&normal));
 
