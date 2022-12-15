@@ -3,7 +3,7 @@
 use std::convert::TryInto;
 
 use image::{Pixel, Rgba, RgbaImage};
-use nalgebra::{Point2, Point4, Vector2, Vector4, Matrix4, clamp, Point3};
+use nalgebra::{clamp, Matrix4, Point2, Point4, RowVector4, Vector2, Vector4};
 use obj::{Obj, TexturedVertex};
 
 /// Implementation of the Bresenham's line algorithm
@@ -176,8 +176,8 @@ fn draw_face_barycentric(
     let min_x = std::cmp::min(v0_s.x, std::cmp::min(v1_s.x, v2_s.x));
     let min_y = std::cmp::min(v0_s.y, std::cmp::min(v1_s.y, v2_s.y));
 
-    let vec1: Vector2::<i32> = v1_s - v0_s;
-    let vec2: Vector2::<i32> = v2_s - v0_s;
+    let vec1: Vector2<i32> = v1_s - v0_s;
+    let vec2: Vector2<i32> = v2_s - v0_s;
 
     let vec1_x_vec2 = vec1.perp(&vec2) as f32;
 
@@ -287,11 +287,13 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
 
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; img.height() as usize]; img.width() as usize];
 
-    let camera = Point3::new(0., 0., 3.);
-    let camera = Matrix4::<f32>::new(1., 0. ,0., 0.,
-                                     0., 1., 0., 0.,
-                                     0., 0., 1., 0.,
-                                     0., 0., -1./camera.z, 1.);
+    let focal_length = 3.;
+    let camera = Matrix4::<f32>::from_rows(&[
+        RowVector4::new(1., 0., 0., 0.),
+        RowVector4::new(0., 1., 0., 0.),
+        RowVector4::new(0., 0., 1., 0.),
+        RowVector4::new(0., 0., -1. / focal_length, 1.),
+    ]);
 
     for face in faces.chunks(3) {
         let mut world_coords = get_face_world_coords(&model, face);
