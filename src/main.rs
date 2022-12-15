@@ -13,8 +13,8 @@ use std::io::BufReader;
 use std::path::Path;
 use tinyrenderer::draw_wireframe;
 
-const WIDTH: u32 = 1920;
-const HEIGHT: u32 = 1080;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 800;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
