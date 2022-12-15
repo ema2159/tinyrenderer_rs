@@ -2,7 +2,6 @@
 
 use image::{Rgba, RgbaImage};
 use obj::Obj;
-use rand::Rng;
 use tinyrenderer::structs::{Point2, Vec2};
 
 use self::structs::{Point3, Vec3};
@@ -273,7 +272,6 @@ pub fn draw_faces(model: Obj, img: &mut RgbaImage) {
         let light_dir = Vec3 { x: 0., y: 0., z: -1. };
         let intensity = calc_light_intensity(&world_coords, light_dir);
         // Draw face
-        let mut rng = rand::thread_rng();
         if intensity > 0. {
             let color = Rgba([
                 (255. * intensity) as u8,
