@@ -183,7 +183,7 @@ fn draw_face_barycentric(
 
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
-        for y in min_y..max_y {
+        for y in min_y..=max_y {
             let pv0 = Vector2::from(Point2::<i32>::new(x, y) - v0_s);
             let vec1_x_pv0 = vec1.perp(&pv0) as f32;
             let pv0_x_vec2 = pv0.perp(&vec2) as f32;
