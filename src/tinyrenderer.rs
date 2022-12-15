@@ -207,7 +207,7 @@ pub fn draw_faces(model: Obj<TexturedVertex>, img: &mut RgbaImage, texture: Rgba
     let model_scale = Vector3::new(1., 1., 1.);
 
     // Camera and light configuration
-    let camera = Point3::new(0., 0., 1.);
+    let camera = Point3::new(0.5, 0.5, 1.);
     let view_point = model_pos;
     let light = Vector3::new(0., 0., 1.);
 
