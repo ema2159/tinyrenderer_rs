@@ -31,29 +31,29 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Assets dir
     let assets_dir =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head/");
+        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/diablo3_pose/");
 
     // Load model
-    let obj_path = assets_dir.join("african_head.obj");
+    let obj_path = assets_dir.join("diablo3_pose.obj");
     let input = BufReader::new(File::open(obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
-    let texture_path = assets_dir.join("african_head_diffuse.tga");
+    let texture_path = assets_dir.join("diablo3_pose_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Load normal map
-    let normal_map_path = assets_dir.join("african_head_nm_tangent.tga");
+    let normal_map_path = assets_dir.join("diablo3_pose_nm_tangent.tga");
     let mut normal_map = image::open(normal_map_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut normal_map);
 
     // Load specular map
-    let specular_map_path = assets_dir.join("african_head_spec.tga");
+    let specular_map_path = assets_dir.join("diablo3_pose_spec.tga");
     let mut specular_map = image::open(specular_map_path)
         .expect("Opening image failed")
         .into_rgba8();
@@ -68,8 +68,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Camera configuration
     let camera = Camera {
-        position: Point3::new(0.5, 0.5, 1.),
-        focal_length: 1.,
+        position: Point3::new(0., 0., 1.),
+        focal_length: 3.,
         view_point: model_pos,
     };
 
