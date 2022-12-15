@@ -69,14 +69,19 @@ impl Shader for RenderingShader<'_> {
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         // Texture coords
         let uv = Point2::<f32>::from(self.varying_uv * bar_coords);
-        // Shadow calculation
+
+        // Shadow calculation. Compute fragment position in shadow buffer screen space and check in
+        // the shadow buffer if there is another fragment in between it and the light source.
         let shad_buf_p = (self.varying_shadow_tri * bar_coords).insert_row(3, 1.);
-        let shadow =
-            if self.shadow_buffer[shad_buf_p.x as usize][shad_buf_p.y as usize] < shad_buf_p.z {
-                1.
-            } else {
-                0.1
-            };
+        const SHADOW_TOLERANCE: f32 = 10.;
+        let shadow = if self.shadow_buffer[shad_buf_p.x as usize][shad_buf_p.y as usize]
+            < shad_buf_p.z + SHADOW_TOLERANCE
+        {
+            1.
+        } else {
+            0.1
+        };
+
         // Normal computing using Darboux tangent space normal mapping
         let bnormal = self.varying_normals * bar_coords;
 
