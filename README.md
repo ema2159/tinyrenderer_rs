@@ -59,7 +59,7 @@ Implement Gouraud shading. Then, implement model view, projection, and viewport 
 ### Lesson 6/6bis
 Structure code into shaders form. Then, implement texture-based normal mapping for the model, using both global coordinate system normal mapping and Darboux frame normal mapping. Lastly, improve lighting by composing the lighting of the model using ambient, diffuse, and specular lighting (Phong shading).
 
-**Branch:** [Lesson_6](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_6)
+**Branches:** [Lesson_6](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_6) [Lesson_6bis](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_6bis)
 
 **Preview:**
 ![Lesson 6 image](./imgs/lesson6.png)
