@@ -4,8 +4,8 @@ extern crate piston_window;
 use image::{Rgba, RgbaImage};
 use piston_window::EventLoop;
 
-const WIDTH: u32 = 1280;
-const HEIGHT: u32 = 720;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 800;
 
 fn main() {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
