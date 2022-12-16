@@ -49,7 +49,7 @@ Implement perspective projection.
 ![Lesson 4 image](./imgs/lesson4.png)
 
 ### Lesson 5
-Implement Gouraud shading. Then, implement model view, projection, and viewport transformation matrices. Then, chain the transformation matrices.
+Implement Gouraud shading. Then, implement model view, projection, and viewport transformation matrices. Lastly, apply several transformations to the model through matrices transformation chaining.
 
 **Branch:** [Lesson_5](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_5)
 
