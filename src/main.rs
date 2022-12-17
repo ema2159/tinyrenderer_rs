@@ -8,6 +8,7 @@ mod tinyrenderer;
 use image::{Rgba, RgbaImage};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
@@ -20,18 +21,22 @@ const HEIGHT: u32 = 800;
 fn main() -> Result<(), Box<dyn Error>> {
     let mut img = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
-    // Object and texture
-    let obj_path = Path::new(
-        "/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head/african_head.obj",
-    );
-    let texture_path =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/african_head/african_head_diffuse.tga");
+    // Assets dir
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        panic!("No assets directory provided!");
+    }
+    let assets_dir = Path::new(&args[1])
+        .canonicalize()
+        .unwrap_or_else(|_| panic!("Wrong path for assets directory!"));
 
     // Load model
+    let obj_path = assets_dir.join("african_head.obj");
     let input = BufReader::new(File::open(&obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
+    let texture_path = assets_dir.join("african_head_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
