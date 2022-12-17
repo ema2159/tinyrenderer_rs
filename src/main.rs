@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Assets dir
     let assets_dir =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/diablo3_pose/");
+        Path::new("assets/diablo3_pose/");
 
     // Load model
     let obj_path = assets_dir.join("diablo3_pose.obj");
