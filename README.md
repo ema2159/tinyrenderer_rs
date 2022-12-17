@@ -7,6 +7,21 @@ This repo consists of a Rust implementation of the [tinyrenderer](https://github
 - obj-rs 0.6: To retrieve information from .obj files
 - nalgebra 0.31.4: For vector and matrix calculations
 
+## Usage
+To run, just clone any of the branches and do:
+
+```
+cargo run --release <assets directory>
+```
+where `<assets directory>` is the directory in which the corresponding assets of the model are. For example, to run *Lesson 7* you must do:
+
+```
+cargo run --release assets/diablo3_pose
+```
+At the moment, if you want to use other models/textures, you would have to modify the respective assets names in main.
+
+
+
 ## Lessons
 
 ### Lesson 0
