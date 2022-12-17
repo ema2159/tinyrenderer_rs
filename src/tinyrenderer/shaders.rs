@@ -30,7 +30,7 @@ pub struct RenderingShader<'a> {
 
     pub varying_uv: Matrix2x3<f32>,
     pub varying_normals: Matrix3<f32>,
-    pub varying_ndc_tri: Matrix3<f32>,
+    pub varying_view_tri: Matrix3<f32>,
     pub varying_shadow_tri: Matrix3<f32>,
 }
 
@@ -47,7 +47,6 @@ impl Shader for RenderingShader<'_> {
 
         // Calculate position in shadow buffer coords
         let mut shadow_pos = Point4::from(self.uniform_shadow_mv_mat * gl_position.coords);
-        shadow_pos /= shadow_pos.w;
         // Clip out of frame points
         shadow_pos.x = clamp(shadow_pos.x, -1.0, 1.0);
         shadow_pos.y = clamp(shadow_pos.y, -1.0, 1.0);
@@ -56,11 +55,12 @@ impl Shader for RenderingShader<'_> {
             .set_column(nthvert, &shadow_pos.xyz().coords);
 
         // Process vertices
-        *gl_position =
-            Point4::from(self.uniform_projection * self.uniform_model_view * gl_position.coords);
-        *gl_position /= gl_position.w;
-        self.varying_ndc_tri
+        let mv_coords = self.uniform_model_view * gl_position.coords;
+        self.varying_view_tri
             .set_column(nthvert, &gl_position.xyz().coords);
+        *gl_position =
+            Point4::from(self.uniform_projection * mv_coords);
+        *gl_position /= gl_position.w;
         // Clip out of frame points
         gl_position.x = clamp(gl_position.x, -1.0, 1.0);
         gl_position.y = clamp(gl_position.y, -1.0, 1.0);
@@ -85,8 +85,8 @@ impl Shader for RenderingShader<'_> {
         // Normal computing using Darboux tangent space normal mapping
         let bnormal = self.varying_normals * bar_coords;
 
-        let a_row0 = (self.varying_ndc_tri.column(1) - self.varying_ndc_tri.column(0)).transpose();
-        let a_row1 = (self.varying_ndc_tri.column(2) - self.varying_ndc_tri.column(0)).transpose();
+        let a_row0 = (self.varying_view_tri.column(1) - self.varying_view_tri.column(0)).transpose();
+        let a_row1 = (self.varying_view_tri.column(2) - self.varying_view_tri.column(0)).transpose();
         let a_row2 = bnormal.transpose();
         let a_inv_mat = Matrix3::from_rows(&[a_row0, a_row1, a_row2])
             .try_inverse()
@@ -137,17 +137,16 @@ pub struct ShadowShader<'a> {
     pub uniform_shadow_mv_mat: Matrix4<f32>,
     pub uniform_viewport: Matrix4<f32>,
 
-    pub varying_ndc_tri: Matrix3<f32>,
+    pub varying_view_tri: Matrix3<f32>,
 }
 
 impl Shader for ShadowShader<'_> {
     fn vertex_shader(&mut self, _face_idx: u16, nthvert: usize, gl_position: &mut Point4<f32>) {
         *gl_position = Point4::from(self.uniform_shadow_mv_mat * gl_position.coords);
-        *gl_position /= gl_position.w;
         gl_position.x = clamp(gl_position.x, -1.0, 1.0);
         gl_position.y = clamp(gl_position.y, -1.0, 1.0);
         *gl_position = Point4::from(self.uniform_viewport * gl_position.coords);
-        self.varying_ndc_tri
+        self.varying_view_tri
             .set_column(nthvert, &gl_position.xyz().coords);
     }
     fn fragment_shader(&self, _bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {

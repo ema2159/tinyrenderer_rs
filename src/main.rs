@@ -87,7 +87,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
-    // shadow buffer
+    // Shadow buffer
     let mut shadow_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
     // Transformation matrices
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_shadow_mv_mat: shadow_mat,
         uniform_viewport: viewport,
 
-        varying_ndc_tri: Matrix3::<f32>::zeros(),
+        varying_view_tri: Matrix3::<f32>::zeros(),
     };
     // Compute shadows
     draw_faces(&model, &mut _buffer, &mut shadow_buffer, &mut shadow_shader);
@@ -137,7 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         varying_uv: Matrix2x3::<f32>::zeros(),
         varying_normals: Matrix3::<f32>::zeros(),
-        varying_ndc_tri: Matrix3::<f32>::zeros(),
+        varying_view_tri: Matrix3::<f32>::zeros(),
         varying_shadow_tri: Matrix3::<f32>::zeros(),
     };
 
