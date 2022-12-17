@@ -1,5 +1,5 @@
 # tinyrenderer_rs
-This repo consists of a rust implementation of the [tinyrenderer](https://github.com/ssloy/tinyrenderer) walkthrough by professor Dmitry V. Sokolov.
+This repo consists of a Rust implementation of the [tinyrenderer](https://github.com/ssloy/tinyrenderer) walkthrough by professor Dmitry V. Sokolov.
 
 ## Dependencies:
 - image 0.24.5: Image loading and manipulation
