@@ -9,6 +9,7 @@ use image::{Rgba, RgbaImage};
 use nalgebra::{Matrix2x3, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
@@ -30,12 +31,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut color_buffer = RgbaImage::from_pixel(WIDTH, HEIGHT, Rgba([0, 0, 0, 255]));
 
     // Assets dir
-    let assets_dir =
-        Path::new("/home/ema2159/Documents/GitHub/tinyrenderer_rs/assets/diablo3_pose");
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        panic!("No assets directory provided!");
+    }
+    let assets_dir = Path::new(&args[1])
+        .canonicalize()
+        .unwrap_or_else(|_| panic!("Wrong path for assets directory!"));
 
     // Load model
     let obj_path = assets_dir.join("diablo3_pose.obj");
-    let input = BufReader::new(File::open(obj_path)?);
+    let input = BufReader::new(File::open(&obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
