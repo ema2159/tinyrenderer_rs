@@ -18,8 +18,6 @@ use tinyrenderer::draw_faces;
 use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
 use tinyrenderer::shaders::RenderingShader;
 
-use crate::tinyrenderer::shaders::ShadowShader;
-
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
 
@@ -93,9 +91,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
-    // Shadow buffer
-    let mut shadow_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
-
     // Transformation matrices
     let model_view = get_model_view_matrix(
         camera.position,
@@ -108,31 +103,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, depth);
 
-    let shadow_mat = get_model_view_matrix(
-        Point3::<f32>::origin() + dir_light,
-        model_pos,
-        model_pos,
-        model_scale,
-        Vector3::new(0., 1., 0.),
-    );
-
-    // Shaders
-    let mut shadow_shader = ShadowShader {
-        model: &model,
-        uniform_shadow_mv_mat: shadow_mat,
-        uniform_viewport: viewport,
-
-        varying_view_tri: Matrix3::<f32>::zeros(),
-    };
-    // Compute shadows
-    draw_faces(&model, &mut _buffer, &mut shadow_buffer, &mut shadow_shader);
-
     let mut rendering_shader = RenderingShader {
         model: &model,
-        shadow_buffer: &shadow_buffer,
         uniform_model_view: model_view,
         uniform_model_view_it: model_view_it,
-        uniform_shadow_mv_mat: shadow_mat,
         uniform_projection: projection,
         uniform_viewport: viewport,
         uniform_ambient_light: ambient_light,
@@ -144,7 +118,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         varying_uv: Matrix2x3::<f32>::zeros(),
         varying_normals: Matrix3::<f32>::zeros(),
         varying_view_tri: Matrix3::<f32>::zeros(),
-        varying_shadow_tri: Matrix3::<f32>::zeros(),
     };
 
     // Render model
