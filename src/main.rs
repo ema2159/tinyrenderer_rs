@@ -6,7 +6,7 @@ extern crate piston_window;
 mod tinyrenderer;
 
 use image::{Rgba, RgbaImage};
-use nalgebra::{Matrix2x3, Matrix3, Point3, Vector3};
+use nalgebra::{Matrix2x3, Point3, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::env;
@@ -86,7 +86,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Light configuration
     let ambient_light = 5.;
-    let dir_light = Vector3::new(-1., 0., 1.5);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
@@ -110,14 +109,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         uniform_projection: projection,
         uniform_viewport: viewport,
         uniform_ambient_light: ambient_light,
-        uniform_dir_light: (model_view * dir_light.insert_row(3, 0.)).xyz().normalize(),
         uniform_texture: texture,
-        uniform_normal_map: normal_map,
-        uniform_specular_map: specular_map,
 
         varying_uv: Matrix2x3::<f32>::zeros(),
-        varying_normals: Matrix3::<f32>::zeros(),
-        varying_view_tri: Matrix3::<f32>::zeros(),
     };
 
     // Render model
