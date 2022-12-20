@@ -16,9 +16,7 @@ use std::io::BufReader;
 use std::path::Path;
 use tinyrenderer::draw_faces;
 use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
-use tinyrenderer::shaders::RenderingShader;
-
-use crate::tinyrenderer::shaders::ShadowShader;
+use tinyrenderer::shaders::{RenderingShader, ShadowShader};
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
