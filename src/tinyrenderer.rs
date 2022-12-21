@@ -14,7 +14,9 @@ fn draw_face_barycentric(
     color_buffer: &mut RgbaImage,
     z_buffer: &mut [Vec<f32>],
 ) {
+    // Screen coordinates pre-perspective division
     let [v0_c, v1_c, v2_c] = screen_coords;
+    // Screen coordinates post-perspective division
     let mut screen_coords2 = [v0_c / v0_c.w, v1_c / v1_c.w, v2_c / v2_c.w];
     for coord in screen_coords2.iter_mut() {
         coord.x = clamp(coord.x, 0., (color_buffer.width() - 1) as f32);
@@ -42,6 +44,7 @@ fn draw_face_barycentric(
             let s = vec1_x_pv0 / vec1_x_vec2;
             let t = pv0_x_vec2 / vec1_x_vec2;
             let t_s_1 = 1. - (t + s);
+            // Perspective correction for barycentric coordinates
             let mut bar_coords = Vector3::<f32>::new(t_s_1 / v0_c.w, t / v1_c.w, s / v2_c.w);
             bar_coords /= bar_coords.x + bar_coords.y + bar_coords.z;
 
