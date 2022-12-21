@@ -86,3 +86,12 @@ Implement hard shadow computation through shadow mapping.
 
 **Preview:**
 ![Lesson 7 image](./imgs/lesson7.png)
+
+### Lesson 8
+Implement screen space ambient occlusion.
+
+**Branch:** [Lesson_8](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_8)
+
+**Preview:**
+![Lesson 8 image](./imgs/lesson8_1.png)
+![Lesson 8 image](./imgs/lesson8_2.png)
