@@ -93,8 +93,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
-    // Hemisphere light buffer
-    let mut hemisph_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
+    // Ambient occlussion buffer
+    let mut amb_occl_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
     // Transformation matrices
     let model_view = get_model_view_matrix(
@@ -108,7 +108,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, depth);
 
-    // Compute hemisphere light
+    // Compute ambient occlussion
     let mut z_shader = ZShader {
         model: &model,
         uniform_model_view: model_view,
@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     );
             }
             total /= (FRAC_PI_2) * 8.;
-            hemisph_buffer[x][y] = total;
+            amb_occl_buffer[x][y] = total;
         }
     }
 
@@ -158,11 +158,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         &mut rendering_shader,
     );
 
-    // Apply hemisphere light
+    // Apply ambient occlussion
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
             color_buffer.get_pixel_mut(x, y).apply_without_alpha(|ch| {
-                ((ch as f32) * hemisph_buffer[x as usize][y as usize]) as u8
+                ((ch as f32) * amb_occl_buffer[x as usize][y as usize]) as u8
             });
         }
     }
