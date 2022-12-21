@@ -5,18 +5,21 @@ extern crate piston_window;
 
 mod tinyrenderer;
 
-use image::{Rgba, RgbaImage};
-use nalgebra::{Matrix2x3, Point3, Vector3};
+use image::{Pixel, Rgba, RgbaImage};
+use nalgebra::{Matrix2x3, Point2, Point3, Vector2, Vector3};
 use obj::{load_obj, Obj, TexturedVertex};
 use piston_window::EventLoop;
 use std::env;
 use std::error::Error;
+use std::f32::consts::{FRAC_PI_2, FRAC_PI_4};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use tinyrenderer::draw_faces;
-use tinyrenderer::gl::{get_model_view_matrix, get_projection_matrix, get_viewport_matrix};
-use tinyrenderer::shaders::RenderingShader;
+use tinyrenderer::gl::{
+    get_model_view_matrix, get_projection_matrix, get_viewport_matrix, max_elevation_angle,
+};
+use tinyrenderer::shaders::{RenderingShader, ZShader};
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
@@ -79,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Camera configuration
     let camera = Camera {
-        position: Point3::new(0., 0., 1.),
+        position: Point3::new(0.4, -0.26, 1.),
         focal_length: 3.,
         view_point: model_pos,
     };
@@ -89,6 +92,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
+
+    // Hemisphere light buffer
+    let mut hemisph_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
 
     // Transformation matrices
     let model_view = get_model_view_matrix(
@@ -102,6 +108,37 @@ fn main() -> Result<(), Box<dyn Error>> {
     let model_view_it = model_view.try_inverse().unwrap().transpose();
     let viewport = get_viewport_matrix(height, width, depth);
 
+    // Compute hemisphere light
+    let mut z_shader = ZShader {
+        model: &model,
+        uniform_model_view: model_view,
+        uniform_viewport: viewport,
+        uniform_projection: projection,
+    };
+
+    draw_faces(&model, &mut _buffer, &mut z_buffer, &mut z_shader);
+
+    for x in 0..WIDTH as usize {
+        for y in 0..HEIGHT as usize {
+            if z_buffer[x][y] == f32::NEG_INFINITY {
+                continue;
+            }
+            let mut total: f32 = 0.;
+            for n in 0..8 {
+                let theta = n as f32 * FRAC_PI_4;
+                total += FRAC_PI_2
+                    - max_elevation_angle(
+                        &z_buffer,
+                        Point2::new(x as f32, y as f32),
+                        Vector2::new(theta.cos(), theta.sin()),
+                    );
+            }
+            total /= (FRAC_PI_2) * 8.;
+            hemisph_buffer[x][y] = total;
+        }
+    }
+
+    // Render model
     let mut rendering_shader = RenderingShader {
         model: &model,
         uniform_model_view: model_view,
@@ -114,13 +151,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         varying_uv: Matrix2x3::<f32>::zeros(),
     };
 
-    // Render model
     draw_faces(
         &model,
         &mut color_buffer,
         &mut z_buffer,
         &mut rendering_shader,
     );
+
+    // Apply hemisphere light
+    for x in 0..WIDTH {
+        for y in 0..HEIGHT {
+            color_buffer.get_pixel_mut(x, y).apply_without_alpha(|ch| {
+                ((ch as f32) * hemisph_buffer[x as usize][y as usize]) as u8
+            });
+        }
+    }
 
     image::imageops::flip_vertical_in_place(&mut color_buffer);
 
