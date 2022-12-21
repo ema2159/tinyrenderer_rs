@@ -95,3 +95,11 @@ Implement screen space ambient occlusion.
 **Preview:**
 ![Lesson 8 image](./imgs/lesson8_1.png)
 ![Lesson 8 image](./imgs/lesson8_2.png)
+
+### Technical difficulties: linear interpolation with perspective deformations
+Implement perspective correction for perspective deformations during linear interpolation.
+
+**Branch:** [persp_correction](https://github.com/ema2159/tinyrenderer_rs/tree/persp_correction)
+
+**Preview:**
+![Lesson 8 image](./imgs/persp_corr.png)
