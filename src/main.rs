@@ -41,26 +41,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap_or_else(|_| panic!("Wrong path for assets directory!"));
 
     // Load model
-    let obj_path = assets_dir.join("diablo3_pose.obj");
+    let obj_path = assets_dir.join("floor.obj");
     let input = BufReader::new(File::open(obj_path)?);
     let model: Obj<TexturedVertex> = load_obj(input)?;
 
     // Load texture
-    let texture_path = assets_dir.join("diablo3_pose_diffuse.tga");
+    let texture_path = assets_dir.join("floor_diffuse.tga");
     let mut texture = image::open(texture_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut texture);
 
     // Load normal map
-    let normal_map_path = assets_dir.join("diablo3_pose_nm_tangent.tga");
+    let normal_map_path = assets_dir.join("floor_nm_tangent.tga");
     let mut normal_map = image::open(normal_map_path)
         .expect("Opening image failed")
         .into_rgba8();
     image::imageops::flip_vertical_in_place(&mut normal_map);
 
     // Load specular map
-    let specular_map_path = assets_dir.join("diablo3_pose_spec.tga");
+    let specular_map_path = assets_dir.join("floor_spec.tga");
     let mut specular_map = image::open(specular_map_path)
         .expect("Opening image failed")
         .into_rgba8();
@@ -79,14 +79,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Camera configuration
     let camera = Camera {
-        position: Point3::new(0., 0., 1.),
-        focal_length: 3.,
+        position: Point3::new(0.3, 0.3, 1.),
+        focal_length: 1.,
         view_point: model_pos,
     };
 
     // Light configuration
     let ambient_light = 5.;
-    let dir_light = Vector3::new(-1., 0., 1.5);
+    let dir_light = Vector3::new(1., 1., 1.);
 
     // Z buffer
     let mut z_buffer = vec![vec![f32::NEG_INFINITY; height as usize]; width as usize];
