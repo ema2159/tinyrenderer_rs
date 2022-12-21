@@ -58,13 +58,7 @@ impl Shader for RenderingShader<'_> {
         let mv_coords = self.uniform_model_view * gl_position.coords;
         self.varying_view_tri
             .set_column(nthvert, &gl_position.xyz().coords);
-        *gl_position =
-            Point4::from(self.uniform_projection * mv_coords);
-        *gl_position /= gl_position.w;
-        // Clip out of frame points
-        gl_position.x = clamp(gl_position.x, -1.0, 1.0);
-        gl_position.y = clamp(gl_position.y, -1.0, 1.0);
-        *gl_position = Point4::from(self.uniform_viewport * gl_position.coords);
+        *gl_position = Point4::from(self.uniform_viewport * self.uniform_projection * mv_coords);
     }
     fn fragment_shader(&self, bar_coords: Vector3<f32>) -> Option<Rgba<u8>> {
         // Texture coords
@@ -85,8 +79,10 @@ impl Shader for RenderingShader<'_> {
         // Normal computing using Darboux tangent space normal mapping
         let bnormal = self.varying_normals * bar_coords;
 
-        let a_row0 = (self.varying_view_tri.column(1) - self.varying_view_tri.column(0)).transpose();
-        let a_row1 = (self.varying_view_tri.column(2) - self.varying_view_tri.column(0)).transpose();
+        let a_row0 =
+            (self.varying_view_tri.column(1) - self.varying_view_tri.column(0)).transpose();
+        let a_row1 =
+            (self.varying_view_tri.column(2) - self.varying_view_tri.column(0)).transpose();
         let a_row2 = bnormal.transpose();
         let a_inv_mat = Matrix3::from_rows(&[a_row0, a_row1, a_row2])
             .try_inverse()
