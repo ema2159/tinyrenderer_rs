@@ -1,9 +1,9 @@
 # tinyrenderer_rs
-This repo consists of a Rust implementation of the [tinyrenderer](https://github.com/ssloy/tinyrenderer) walkthrough by professor Dmitry V. Sokolov.
+This repo consists of a Rust implementation of the [tinyrenderer](https://github.com/ssloy/tinyrenderer) walkthrough by professor Dmitry V. Sokolov. For a tinyraytracer Rust implementation, check the [tinyraytracer_rs](https://github.com/ema2159/tinyraytracer_rs) repo.
 
 ## Dependencies:
 - image 0.24.5: Image loading and manipulation
-- piston_window 1.127.0: Window to display rendered frames 
+- piston_window 1.127.0: Window to display rendered frames
 - obj-rs 0.6: To retrieve information from .obj files
 - nalgebra 0.31.4: For vector and matrix calculations
 
@@ -48,7 +48,7 @@ Implement triangle filling using both line sweeping algorithm and barycentric co
 ![Lesson 2 image](./imgs/lesson2.png)
 
 ### Lesson 3
-Implement Z-buffer algorithm for back-face culling. Then, apply textures to the mesh. 
+Implement Z-buffer algorithm for back-face culling. Then, apply textures to the mesh.
 
 **Branch:** [Lesson_3](https://github.com/ema2159/tinyrenderer_rs/tree/Lesson_3)
 
