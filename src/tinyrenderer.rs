@@ -32,14 +32,14 @@ fn draw_face_barycentric(
     let vec1: Vector2<f32> = (v1_s - v0_s).xy();
     let vec2: Vector2<f32> = (v2_s - v0_s).xy();
 
-    let vec1_x_vec2 = vec1.perp(&vec2) as f32;
+    let vec1_x_vec2 = vec1.perp(&vec2);
 
     // Calculate if point2 of the bounding box is inside triangle
     for x in min_x..=max_x {
         for y in min_y..=max_y {
             let pv0 = Point2::<f32>::new(x as f32, y as f32) - v0_s.xy();
-            let vec1_x_pv0 = vec1.perp(&pv0) as f32;
-            let pv0_x_vec2 = pv0.perp(&vec2) as f32;
+            let vec1_x_pv0 = vec1.perp(&pv0);
+            let pv0_x_vec2 = pv0.perp(&vec2);
             // Barycentric coordinates
             let s = vec1_x_pv0 / vec1_x_vec2;
             let t = pv0_x_vec2 / vec1_x_vec2;
